@@ -30,19 +30,11 @@ string MCodeMotor::sendCommand(const string& command)
 {
 	socket.sendString(command + "\r\n");
 	response = socket.receiveString();
-	
-	// TODO below is for debugging purposes, remove
-	cout << "cmd [" << command << "]" << endl;
 
-	cout << "response [" << response << "]" << endl;
+	// TODO recieve string until full response is recieved
+	// TODO check that response is right size before substring
+	// TODO timeout when checking for full response
 
-	if (response.size() == 2)
-	{
-		cout << "<<<\n<<<\n<<<\n<<<\n<<<\n<<<\n<<<\n<<<\n<<<\n<<<\n<<<\n";
-		response = socket.receiveString();
-		cout << "response [" << response << "]" << endl;
-	}
-	// remove command and extra characters from the response
 	response = response.substr(command.size() + 2, response.size() - command.size() - 4);
 	return getResponse();
 }

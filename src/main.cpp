@@ -19,9 +19,6 @@ int main()
 	}
 
 	motor.initializeSettings();
-	motor.sendCommand("PR C2");
-	cout << "*" << motor.getResponse() << endl;
 	motor.homeToIndex();
-	motor.sendCommand("PR C2");
-	cout << "*" << motor.getResponse() << endl;
+	motor.sendCommand("MA -1000");
 }
