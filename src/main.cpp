@@ -5,14 +5,17 @@
 #include <thread>
 #include <chrono>
 
+#include "get_distance.hpp"
+
 using namespace std;
 
-const string ipAddress = "192.168.33.1";
-const int port = 503;
+const string motorIpAddress = "192.168.33.1";
+const int motorPort = 503;
 
-int main()
+int main() 
 {
-	MCodeMotor motor(ipAddress, port);
+/*
+	MCodeMotor motor(motorIpAddress, motorPort);
 	if (!motor.connect())
 	{
 		return 1;
@@ -25,16 +28,10 @@ int main()
 		return 1;
 	}
 
-	motor.moveAbsolute(-800);
-
-	this_thread::sleep_for(chrono::milliseconds(5000));
-
-	motor.moveRelative(200);
-	
-	motor.moveRelative(-1000);
-
-	motor.moveRelative(50);
-
-	motor.moveAbsolute(-800);
+	motor.moveAngleAbsolute(-45);
+	motor.moveAngleRelative(90);
+	motor.moveAngleAbsolute(0);
+*/
+	get_distance();
 }
 
