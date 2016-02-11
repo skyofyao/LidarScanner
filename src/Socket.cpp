@@ -53,7 +53,7 @@ bool Socket::hostServer(unsigned int port)
 
 bool Socket::acceptConnection()
 {
-	struct sockaddr_in svradd, cliadd;
+	struct sockaddr_in cliadd;
 	socklen_t clilen = sizeof(cliadd);
 
 	// accept connection
