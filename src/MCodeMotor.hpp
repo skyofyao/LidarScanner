@@ -9,18 +9,19 @@ using namespace std;
 class MCodeMotor
 {
 private:
-	static const unsigned int DEFAULT_ACCELERATION = 10000;
-	static const unsigned int DEFAULT_DECELERATION = 50000;
-	static const unsigned int DEFAULT_INITIAL_VELOCITY = 100;
-	static const unsigned int DEFAULT_MAXIMUM_VELOCITY = 1000;
-	static const unsigned int DEFAULT_RUN_CURRENT = 80;
-	static const unsigned int DEFAULT_HOLD_CURRENT = 80;
+	static const unsigned int DEFAULT_ACCELERATION;
+	static const unsigned int DEFAULT_DECELERATION;
+	static const unsigned int DEFAULT_INITIAL_VELOCITY;
+	static const unsigned int DEFAULT_MAXIMUM_VELOCITY;
+	static const unsigned int DEFAULT_RUN_CURRENT;
+	static const unsigned int DEFAULT_HOLD_CURRENT;
 
 public:
 	MCodeMotor(const string& ipAddress, const unsigned int port);
 	bool connect();
-	void sendCommand(const string& command);
+	string sendCommand(const string& command);
 	string getResponse();
+	bool getResponseBool(bool defaultValue);
 	void initializeSettings(
 		const unsigned int acceleration = DEFAULT_ACCELERATION,
 		const unsigned int deceleration = DEFAULT_DECELERATION,
@@ -30,7 +31,7 @@ public:
 		const unsigned int holdCurrent = DEFAULT_HOLD_CURRENT);
 	bool homeToIndex();
 	void blockWhileMoving();
-	bool isMoving();
+	bool isMoving(bool defaultValue);
 
 private:
 	const string ipAddress;
@@ -38,8 +39,8 @@ private:
 	Socket socket;
 	string response;
 
-	static const unsigned int BLOCKING_REFRESH_RATE_MILLISECONDS = 50;
-	static const unsigned int HOME_RETRYS = 5;
-	static const unsigned int HOME_RETRY_DELAY_MILLISECONDS = 1000;
+	static const unsigned int BLOCKING_REFRESH_RATE_MILLISECONDS;
+	static const unsigned int HOME_RETRYS;
+	static const unsigned int HOME_RETRY_DELAY_MILLISECONDS;
 };
 

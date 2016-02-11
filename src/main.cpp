@@ -18,22 +18,10 @@ int main()
 		return 1;
 	}
 
-	motor.sendCommand("EE 1"); // Encoder Enable
-/*	while (true)
-	{
-		motor.sendCommand("PR I6"); // Read Encoder Count
-		sleep(0.25);
-		cout << socket.receiveString();
-	}*/
 	motor.initializeSettings();
-	motor.sendCommand("PR I6"); // Read Encoder at Index
-	motor.sendCommand("HI 3"); // Home to Index Mark
-	while (true)
-	{
-		cout << (motor.isMoving() ? "true" : "false") << endl;
-		this_thread::sleep_for(chrono::milliseconds(200));
-	}
-//	motor.sendCommand("MR 100"); // Move Relative
-//	sleep(2);
-//	motor.sendCommand("MR -100"); // Move Relative
+	motor.sendCommand("PR C2");
+	cout << "*" << motor.getResponse() << endl;
+	motor.homeToIndex();
+	motor.sendCommand("PR C2");
+	cout << "*" << motor.getResponse() << endl;
 }
