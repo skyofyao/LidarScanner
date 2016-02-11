@@ -88,7 +88,7 @@ bool MCodeMotor::homeToIndex()
 	{
 		if (i != 0)
 		{
-			cout << "[Error] Motor at " << ipAddress << ":" << port 
+			cerr << "[Error] Motor at " << ipAddress << ":" << port 
 				<< " was blocked homing to index. Retrying in " 
 				<< HOME_RETRY_DELAY_MILLISECONDS << " milliseconds..." << endl;
 			this_thread::sleep_for(chrono::milliseconds(HOME_RETRY_DELAY_MILLISECONDS));
@@ -107,7 +107,7 @@ bool MCodeMotor::homeToIndex()
 	}
 	else
 	{
-		cout << "[Error] Motor at " << ipAddress << ":" << port 
+		cerr << "[Error] Motor at " << ipAddress << ":" << port 
 			<< " was unable to home to index after " << HOME_RETRYS
 			<< " retrys." << endl;
 		
