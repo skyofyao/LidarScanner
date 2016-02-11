@@ -40,7 +40,18 @@ public:
 		const unsigned int maximumVelocity = DEFAULT_MAXIMUM_VELOCITY,
 		const unsigned int runCurrent = DEFAULT_RUN_CURRENT,
 		const unsigned int holdCurrent = DEFAULT_HOLD_CURRENT);
+	void setAcceleration(const unsigned int acceleration = DEFAULT_ACCELERATION);
+	void setDeceleration(const unsigned int deceleration = DEFAULT_DECELERATION);
+	void setInitialVelocity(const unsigned int initialVelocity = DEFAULT_INITIAL_VELOCITY);
 	void setMaximumVelocity(const unsigned int maximumVelocity = DEFAULT_MAXIMUM_VELOCITY);
+	void setRunCurrent(const unsigned int runCurrent = DEFAULT_RUN_CURRENT);
+	void setHoldCurrent(const unsigned int holdCurrent = DEFAULT_HOLD_CURRENT);
+	unsigned int getAcceleration();
+	unsigned int getDeceleration();
+	unsigned int getInitialVelocity();
+	unsigned int getMaximumVelocity();
+	unsigned int getRunCurrent();
+	unsigned int getHoldCurrent();
 	bool homeToIndex();
 	bool moveAngleRelative(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
 	bool moveAngleAbsolute(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
@@ -55,5 +66,11 @@ private:
 	const unsigned int port;
 	Socket socket;
 	string response;
+	unsigned int acceleration;
+	unsigned int deceleration;
+	unsigned int initialVelocity;
+	unsigned int maximumVelocity;
+	unsigned int runCurrent;
+	unsigned int holdCurrent;
 };
 

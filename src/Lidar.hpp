@@ -9,7 +9,7 @@ using namespace std;
 class Lidar
 {
 public:
-struct DataPoint
+	struct DataPoint
 	{
 		unsigned int index;
 		double x;

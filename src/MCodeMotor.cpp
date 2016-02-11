@@ -94,18 +94,80 @@ void MCodeMotor::initializeSettings(const unsigned int acceleration,
 {
 	sendCommand("ST 0"); // Reset Stall Flag
 	sendCommand("EE 1"); // Enable Encoder
+	setAcceleration(acceleration);
+	setDeceleration(deceleration);
+	setInitialVelocity(initialVelocity);
+	setMaximumVelocity(maximumVelocity);
+	setRunCurrent(runCurrent);
+	setHoldCurrent(holdCurrent);
+}
+
+void MCodeMotor::setAcceleration(const unsigned int acceleration)
+{
 	sendCommand("A " + to_string(acceleration)); // Set Acceleration
+	this->acceleration = acceleration;
+}
+
+void MCodeMotor::setDeceleration(const unsigned int deceleration)
+{
 	sendCommand("D " + to_string(deceleration)); // Set Decleration
+	this->deceleration = deceleration;
+}
+
+void MCodeMotor::setInitialVelocity(const unsigned int initialVelocity)
+{
 	sendCommand("VI " + to_string(initialVelocity)); // Set Initial Velocity
-	sendCommand("VM " + to_string(maximumVelocity)); // Set Maximum Velocity
-	sendCommand("RC " + to_string(runCurrent)); // Set Run Current to 80%
-	sendCommand("HC " + to_string(holdCurrent)); // Set Hold Current to 80%
+	this->initialVelocity = initialVelocity;
 }
 
 void MCodeMotor::setMaximumVelocity(const unsigned int maximumVelocity)
 {
 	sendCommand("VM " + to_string(maximumVelocity)); // Set Maximum Velocity
+	this->maximumVelocity = maximumVelocity;
 }
+
+void MCodeMotor::setRunCurrent(const unsigned int runCurrent)
+{
+	sendCommand("RC " + to_string(runCurrent)); // Set Run Current
+	this->runCurrent = runCurrent;
+}
+
+void MCodeMotor::setHoldCurrent(const unsigned int holdCurrent)
+{
+	sendCommand("HC " + to_string(holdCurrent)); // Set Hold Current
+	this->holdCurrent = holdCurrent;
+}
+
+unsigned int MCodeMotor::getAcceleration()
+{
+	return acceleration;
+}
+
+unsigned int MCodeMotor::getDeceleration()
+{
+	return deceleration;
+}
+
+unsigned int MCodeMotor::getInitialVelocity()
+{
+	return initialVelocity;
+}
+
+unsigned int MCodeMotor::getMaximumVelocity()
+{
+	return maximumVelocity;
+}
+
+unsigned int MCodeMotor::getRunCurrent()
+{
+	return runCurrent;
+}
+
+unsigned int MCodeMotor::getHoldCurrent()
+{
+	return holdCurrent;
+}
+
 
 bool MCodeMotor::homeToIndex()
 {

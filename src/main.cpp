@@ -1,5 +1,6 @@
 #include "MCodeMotor.hpp"
-#include "Lidar.hpp"	
+#include "Lidar.hpp"
+#include "Scanner.hpp"
 
 #include <iostream>
 #include <string>
@@ -33,56 +34,10 @@ int main()
 	{
 		return 1;
 	}
-	
-	motor.moveAngleAbsolute(-45);
 
-	//motor.setMaximumVelocity(500);
-	motor.setMaximumVelocity(100);
-	motor.moveAngleRelative(90, 0);
+	Scanner scanner(lidar, motor);
 
-	//vector<Lidar::DataPoint> data = lidar.scan(2050);
-	vector<Lidar::DataPoint> data = lidar.scan(10010);
-
-	int count = 0;
-	for(unsigned int i = 0; i < data.size(); i++)
-	{
-		if (i > 0 && data[i].index < data[i - 1].index)
-		{
-			cout << endl;
-			count = 0;
-		}
-
-		while (count < data[i].index)
-		{
-			cout << 0 << " ";
-			count++;
-		}
-		cout << data[i].intensity << " ";
-		count++;
-	}
-
-	cout << endl << "::==::" << endl;
-
-	count = 0;
-	for(unsigned int i = 0; i < data.size(); i++)
-	{
-		if (i > 0 && data[i].index < data[i - 1].index)
-		{
-			cout << endl;
-			count = 0;
-		}
-
-		while (count < data[i].index)
-		{
-			cout << 0 << " ";
-			count++;
-		}
-		cout << (int)(data[i].x + 500) << " ";
-		count++;
-	}
-
-	motor.blockWhileMoving(1000);
-	motor.setMaximumVelocity();
+	scanner.scan();
 
 	motor.moveAngleAbsolute(0);
 }
