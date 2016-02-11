@@ -1,0 +1,23 @@
+# Installing Dependencies
+
+## GCC and Make
+GCC and Make are required to compile the URG Network. On Debian based Linux distrbutions this can be installed with the following command.
+`sudo apt-get install build-essential`
+
+## URG Network (Version 1.2.0)
+This project uses the URG Network for communicating and collecting data from Lidar. The URG library can be found at http://urgnetwork.sourceforge.net/.To install follow the instructions in the Readme file.
+
+## FlyCapture SDK (Version 2.9.3.43)
+This project uses FlyCapture SDK for retrieving images from the camera. The FlyCapture SDK can be found at https://www.ptgrey.com/flycapture-sdk/. To install follow the instructions at http://www.ptgrey.com/KB/10357/. After installing, copy the files in flycapture-<version>_armhf/include to /usr/include/flycapture.
+
+# Compiling and Running
+
+## Configuration
+The network configuration for the motor and lidar is defined in src/main.cpp.
+
+## Compiling
+The program can be compiled by running `make`.
+
+## Running the program
+After the program is compiled, `./pheno3` will run the program.
+

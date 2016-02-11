@@ -33,14 +33,14 @@ void Scanner::scan()
 	for (unsigned int i = 0; i < data.size(); i++)
 	{
 		Lidar::DataPoint point = data.at(i);
-		double angle = -(motor.getMoveRelativeAngleAtTime(SCAN_SIZE, point.timestamp - startTime) -
+		double angle = (motor.getMoveRelativeAngleAtTime(SCAN_SIZE, point.timestamp - startTime) -
 			(SCAN_SIZE / 2.0)) * PI / 180;
 
 		// convert from cylindrical to orthagonal coordinates
 		DataPoint newPoint;
-		newPoint.x = point.x * cos(angle);
-		newPoint.y = point.x * sin(angle);
-		newPoint.z = point.y;
+		newPoint.x = point.y * cos(angle);
+		newPoint.y = point.y * sin(angle);
+		newPoint.z = point.x;
 		newPoint.intensity = point.intensity;
 		lidarData.push_back(newPoint);
 	}

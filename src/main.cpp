@@ -59,10 +59,10 @@ int main()
 	stlfile.open("points.pcd");
 	// header
 	stlfile << "VERSION .7" << endl;
-	stlfile << "FIELDS x y z intensity" << endl;
-	stlfile << "SIZE 8 8 8 4" << endl;
-	stlfile << "TYPE F F F I" << endl;
-	stlfile << "COUNT 1 1 1 1" << endl;
+	stlfile << "FIELDS x y z"/* intensity"*/ << endl;
+	stlfile << "SIZE 4 4 4"/* 4"*/ << endl;
+	stlfile << "TYPE F F F"/* I"*/ << endl;
+	stlfile << "COUNT 1 1 1"/* 1"*/ << endl;
 	stlfile << "WIDTH " << data.size() << endl;
 	stlfile << "HEIGHT 1" << endl;
 	stlfile << "VIEWPOINT 0 0 0 1 0 0 0" << endl;
@@ -72,7 +72,7 @@ int main()
 	for (unsigned int i = 0; i < data.size(); i++)
 	{
 		Scanner::DataPoint point = data.at(i);
-		stlfile << point.x << " " << point.y << " " << point.z << " " << point.intensity << endl;
+		stlfile << point.x << " " << point.y << " " << point.z << " " /*<< point.intensity */<< endl;
 	}
 	stlfile.close();
 
