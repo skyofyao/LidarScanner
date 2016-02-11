@@ -13,13 +13,13 @@ public:
 	bool acceptConnection();
 	string receiveString();
 
-	static const unsigned int CONNECTION_QUEUE_LENGTH = 5;
-	static const unsigned int RECEIVE_BUFFER_SIZE = 256;
-
 private:
 	// listen socket file descriptor
 	int listenfd;
 
 	// connection socket file descriptor
 	int connfd;
+
+	static const unsigned int CONNECTION_QUEUE_LENGTH;
+	static const unsigned int RECEIVE_BUFFER_SIZE;
 };

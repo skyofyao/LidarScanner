@@ -11,6 +11,9 @@
 
 using namespace std;
 
+const unsigned int Socket::CONNECTION_QUEUE_LENGTH = 5;
+const unsigned int Socket::RECEIVE_BUFFER_SIZE = 256;
+
 bool Socket::hostServer(const unsigned int port)
 {
 	struct sockaddr_in svradd;
@@ -21,7 +24,7 @@ bool Socket::hostServer(const unsigned int port)
 	// the socket function gives a negative value on not connecting
 	if (listenfd < 0)
 	{
-		cerr << "Cannot open socket" << endl;
+		cerr << "[Error] Cannot open socket" << endl;
 		return false;
 	}
 
@@ -34,19 +37,19 @@ bool Socket::hostServer(const unsigned int port)
 	// bind
 	if (bind(listenfd, (struct sockaddr*)&svradd, sizeof(svradd)) < 0)
 	{
-		cerr << "Error on binding\n";
+		cerr << "[Error] Error on binding\n";
 		return false;
 	}
 
 	// listen
 	if (listen(listenfd, CONNECTION_QUEUE_LENGTH) < 0)
 	{
-		cerr << "Failed to listen on port " << port << endl;
+		cerr << "[Error] Failed to listen on port " << port << endl;
 		return false;
 	}
 	else
 	{
-		cout << "Listening on port " << port << endl;
+		cout << "[Info] Listening on port " << port << endl;
 	}
 	return true;
 }
@@ -60,12 +63,12 @@ bool Socket::acceptConnection()
 	connfd = accept(listenfd, (struct sockaddr*) &cliadd, &clilen);
 	if (connfd < 0)
 	{
-		cerr << "Error receiving connection\n";
+		cerr << "[Error] Error receiving connection\n";
 		return false;
 	}
 	else
 	{
-		cout << "Got connection from " << inet_ntoa(cliadd.sin_addr) << ":" << ntohs(cliadd.sin_port) << endl;
+		cout << "[Info] Got connection from " << inet_ntoa(cliadd.sin_addr) << ":" << ntohs(cliadd.sin_port) << endl;
 	}
 	return true;
 }
@@ -80,7 +83,7 @@ bool Socket::connectToServer(const string& ipAddress, const unsigned int port)
 	// the socket function gives a negative value on not connecting
 	if (connfd < 0)
 	{
-		cerr << "Cannot open socket" << endl;
+		cerr << "[Error] Cannot open socket" << endl;
 		return false;
 	}
 
@@ -93,11 +96,11 @@ bool Socket::connectToServer(const string& ipAddress, const unsigned int port)
 	// connect
 	if (connect(connfd, (struct sockaddr*)&svradd, sizeof (svradd)) < 0)
 	{
-		cerr << "Error connecting to " << ipAddress << ":" << port << endl;
+		cerr << "[Error] Error connecting to " << ipAddress << ":" << port << endl;
 		return false;
 	}
 
-	cout << "Connected to " << ipAddress << ":" << port << endl;
+	cout << "[Info] Connected to " << ipAddress << ":" << port << endl;
 	return true;
 }
 
@@ -105,7 +108,7 @@ bool Socket::sendString(const string& message)
 {
 	if (write(connfd, message.c_str(), message.length()) < 0)
 	{
-		cerr << "Error sending string" << endl;
+		cerr << "[Error] Error sending string" << endl;
 		return false;
 	}
 	return true;
@@ -118,7 +121,7 @@ string Socket::receiveString()
 
 	if (read(connfd, buffer, RECEIVE_BUFFER_SIZE) < 0)
 	{
-		cerr << "Error receiving string" << endl;
+		cerr << "[Error] Error receiving string" << endl;
 	}
 
 	return buffer;
