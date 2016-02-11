@@ -19,6 +19,11 @@ int main()
 	}
 
 	motor.initializeSettings();
-	motor.homeToIndex();
+
+	if (!motor.homeToIndex())
+	{
+		return 1;
+	}
+
 	motor.sendCommand("MA -1000");
 }

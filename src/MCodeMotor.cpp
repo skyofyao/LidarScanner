@@ -101,7 +101,7 @@ bool MCodeMotor::homeToIndex()
 	{
 		cerr << "[Error] Motor at " << ipAddress << ":" << port 
 			<< " was unable to home to index after " << HOME_RETRYS
-			<< " retrys." << endl;
+			<< " trys." << endl;
 		
 	}
 	return success;
