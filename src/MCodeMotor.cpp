@@ -168,6 +168,67 @@ unsigned int MCodeMotor::getHoldCurrent()
 	return holdCurrent;
 }
 
+unsigned int MCodeMotor::getMoveRelativeTime(const float angle)
+{
+	if (getInitialVelocity() != 0)
+	{
+		// TODO support non-zero initial velocity
+		cerr << "[Error] Move time calculation with non-zero initial velocity "
+			<< "not supported." << endl;
+	}
+
+	unsigned int encoderCounts = abs(ceil((angle * ENCODER_COUNTS_PER_ROTATION) / 360));
+
+	// this uses doubles to prevent overflow and rounding
+	unsigned int rampUpCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
+		getAcceleration();
+	unsigned int rampDownCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
+		getDeceleration();
+	unsigned int rampCounts = rampUpCounts + rampDownCounts;
+
+	bool reachFullSpeed = encoderCounts >= rampCounts;
+
+	if (reachFullSpeed)
+	{
+		return 1000.0 * encoderCounts / getMaximumVelocity() +
+			1000.0 * getMaximumVelocity() * (getAcceleration() + getDeceleration()) /
+			(2 * (double)getAcceleration() * getDeceleration());
+	}
+	else
+	{
+		return sqrt(2.0 * 1000 * 1000 *  encoderCounts * (getAcceleration() + getDeceleration()) /
+			(getAcceleration() * getDeceleration()));
+	}
+}
+
+float MCodeMotor::getMoveRelativeAngleAtTime(const float angle, const unsigned int milliseconds)
+{
+	if (getInitialVelocity() != 0)
+	{
+		// TODO support non-zero initial velocity
+		cerr << "[Error] Move time calculation with non-zero initial velocity "
+			<< "not supported." << endl;
+	}
+
+	unsigned int encoderCounts = abs(ceil((angle * ENCODER_COUNTS_PER_ROTATION) / 360));
+
+	// this uses doubles to prevent overflow and rounding
+	unsigned int rampUpCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
+		getAcceleration();
+	unsigned int rampDownCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
+		getDeceleration();
+	unsigned int moveTime = getMoveRelativeTime(angle)
+
+	bool reachFullSpeed = encoderCounts >= rampCounts;
+
+	if (!reachFullSpeed)
+	{
+		// TODO support angle calcuation when motor does not reach maximum velocity
+		cerr << "[Error] Angle calculation not supported when motor does not reach maximum velocity" << endl;
+	}
+
+	// TODO
+}
 
 bool MCodeMotor::homeToIndex()
 {

@@ -1,5 +1,9 @@
 #include "Scanner.hpp"
 
+#include <iostream>
+
+using namespace std;
+
 const int Scanner::SCAN_CENTER = 0;
 const int Scanner::SCAN_SIZE = 90;
 const unsigned int Scanner::SCAN_VELOCITY = 100;
@@ -17,7 +21,7 @@ void Scanner::scan()
 
 	motor.moveAngleRelative(SCAN_SIZE, 0);
 
-	vector<Lidar::DataPoint> data = lidar.scan(10010);
+	vector<Lidar::DataPoint> data = lidar.scan(motor.getMoveRelativeTime(SCAN_SIZE));
 
 	// TODO process data
 

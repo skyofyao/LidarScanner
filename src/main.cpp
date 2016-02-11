@@ -1,6 +1,7 @@
 #include "MCodeMotor.hpp"
 #include "Lidar.hpp"
 #include "Scanner.hpp"
+#include "Camera.hpp"
 
 #include <iostream>
 #include <string>
@@ -15,7 +16,11 @@ const string lidarIpAddress = "192.168.0.10";
 const int lidarPort = 10940;
 
 int main() 
-{
+{	
+	/* Camera11 camera1;	
+	int i;
+	 camera1.cam_init();*/
+
 	MCodeMotor motor(motorIpAddress, motorPort);
 	if (!motor.connect())
 	{
