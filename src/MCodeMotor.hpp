@@ -16,6 +16,14 @@ private:
 	static const unsigned int DEFAULT_RUN_CURRENT;
 	static const unsigned int DEFAULT_HOLD_CURRENT;
 
+	static const unsigned int BLOCKING_REFRESH_RATE_MILLISECONDS;
+	static const unsigned int BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS;
+	static const unsigned int HOME_RETRYS;
+	static const unsigned int HOME_RETRY_DELAY_MILLISECONDS;
+
+	static const unsigned int MOTOR_RESPONSE_TIMEOUT_MILLISECONDS;
+	static const unsigned int MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS;
+
 public:
 	MCodeMotor(const string& ipAddress, const unsigned int port);
 	bool connect();
@@ -30,17 +38,16 @@ public:
 		const unsigned int runCurrent = DEFAULT_RUN_CURRENT,
 		const unsigned int holdCurrent = DEFAULT_HOLD_CURRENT);
 	bool homeToIndex();
-	void blockWhileMoving();
+	bool moveRelative(const int motorSteps, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
+	bool moveAbsolute(const int motorSteps, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
+	bool blockWhileMoving(const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
 	bool isMoving(bool defaultValue);
+	bool detectStall();
 
 private:
 	const string ipAddress;
 	const unsigned int port;
 	Socket socket;
 	string response;
-
-	static const unsigned int BLOCKING_REFRESH_RATE_MILLISECONDS;
-	static const unsigned int HOME_RETRYS;
-	static const unsigned int HOME_RETRY_DELAY_MILLISECONDS;
 };
 

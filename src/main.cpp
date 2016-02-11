@@ -25,5 +25,16 @@ int main()
 		return 1;
 	}
 
-	motor.sendCommand("MA -1000");
+	motor.moveAbsolute(-800);
+
+	this_thread::sleep_for(chrono::milliseconds(5000));
+
+	motor.moveRelative(200);
+	
+	motor.moveRelative(-1000);
+
+	motor.moveRelative(50);
+
+	motor.moveAbsolute(-800);
 }
+

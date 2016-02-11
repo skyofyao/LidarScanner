@@ -13,6 +13,7 @@ using namespace std;
 
 const unsigned int Socket::CONNECTION_QUEUE_LENGTH = 5;
 const unsigned int Socket::RECEIVE_BUFFER_SIZE = 256;
+const unsigned int Socket::TIMEOUT_MILLISECONDS = 50;
 
 bool Socket::hostServer(const unsigned int port)
 {
@@ -70,6 +71,12 @@ bool Socket::acceptConnection()
 	{
 		cout << "[Info] Got connection from " << inet_ntoa(cliadd.sin_addr) << ":" << ntohs(cliadd.sin_port) << endl;
 	}
+
+	if (!setTimeout())
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -100,6 +107,11 @@ bool Socket::connectToServer(const string& ipAddress, const unsigned int port)
 		return false;
 	}
 
+	if (!setTimeout())
+	{
+		return false;
+	}
+
 	cout << "[Info] Connected to " << ipAddress << ":" << port << endl;
 	return true;
 }
@@ -126,3 +138,25 @@ string Socket::receiveString()
 
 	return buffer;
 }
+
+bool Socket::setTimeout()
+{
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = TIMEOUT_MILLISECONDS * 1000;
+
+	if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
+	{
+		cerr << "[Error] Error setting socket timeout" << endl;
+		return false;
+	}
+
+	if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
+	{
+		cerr << "[Error] Error setting socket timeout" << endl;
+		return false;
+	}
+
+	return true;
+}
+
