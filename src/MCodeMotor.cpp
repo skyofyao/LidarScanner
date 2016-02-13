@@ -34,10 +34,10 @@ string MCodeMotor::sendCommand(const string& command)
 	socket.sendString(command + "\r\n");
 	response = socket.receiveString();
 
-	// Each response from the motor ends with a '?'.
+	// Each response from the motor ends with a '?' or '>'.
 	// Check to see that a '?' was recieved before continuing.
 	chrono::steady_clock::time_point recieveStartTime = chrono::steady_clock::now();
-	while ((getResponse().find('?') == string::npos) &&
+	while ((getResponse().find('?') == string::npos && getResponse().find('>') == string::npos) &&
 		(chrono::duration_cast<std::chrono::milliseconds>(
 			chrono::steady_clock::now() - recieveStartTime).count() <=
 			MOTOR_RESPONSE_TIMEOUT_MILLISECONDS))
@@ -47,10 +47,10 @@ string MCodeMotor::sendCommand(const string& command)
 	}
 
 
-	if (getResponse().find('?') == string::npos)
+	if (getResponse().find('?') == string::npos && getResponse().find('>') == string::npos)
 	{
 		cout << response << endl;
-		// The response does not contain a '?'.
+		// The response does not contain a '?' or '>'.
 		// The response timedout.
 		cerr << "[Error] Timeout: No response from motor at " << ipAddress << ":" 
 			<< port << "!" << endl;
