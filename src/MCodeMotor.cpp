@@ -3,6 +3,7 @@
 #include <thread>
 #include <chrono>
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
@@ -18,6 +19,8 @@ const unsigned int MCodeMotor::HOME_RETRYS = 5;
 const unsigned int MCodeMotor::HOME_RETRY_DELAY_MILLISECONDS = 1000;
 const unsigned int MCodeMotor::MOTOR_RESPONSE_TIMEOUT_MILLISECONDS = 500;
 const unsigned int MCodeMotor::MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS = 5;
+const int MCodeMotor::DEFAULT_POSITION = -1322;
+const unsigned int MCodeMotor::ENCODER_COUNTS_PER_ROTATION = 4000;
 
 MCodeMotor::MCodeMotor(const string& ipAddress, const unsigned int port)
 	:	ipAddress(ipAddress)
@@ -112,9 +115,7 @@ bool MCodeMotor::homeToIndex()
 			this_thread::sleep_for(chrono::milliseconds(HOME_RETRY_DELAY_MILLISECONDS));
 		}
 		// Move to the left to make sure the motor is past the index mark
-		sendCommand("MR -20"); // Move left 20
-		blockWhileMoving(100);
-		detectStall();
+		moveRelative(-20, 1000);
 		sendCommand("HI 3"); // Home to Index Mark
 		blockWhileMoving(2000);
 		detectStall();
@@ -124,7 +125,8 @@ bool MCodeMotor::homeToIndex()
 
 	if (success)
 	{
-		sendCommand("C2 0"); // Reset Encoder Count
+		sendCommand("C2 " + to_string(-1 * DEFAULT_POSITION)); // Reset Encoder Count
+		moveAbsolute(0);
 	}
 	else
 	{
@@ -134,6 +136,18 @@ bool MCodeMotor::homeToIndex()
 		
 	}
 	return success;
+}
+
+bool MCodeMotor::moveAngleRelative(const float angle, const unsigned int timeoutMilliseconds)
+{
+	int encoderCounts = ceil((angle * ENCODER_COUNTS_PER_ROTATION) / 360);
+	return moveRelative(encoderCounts, timeoutMilliseconds);
+}
+
+bool MCodeMotor::moveAngleAbsolute(const float angle, const unsigned int timeoutMilliseconds)
+{
+	int encoderCounts = ceil((angle * ENCODER_COUNTS_PER_ROTATION) / 360);
+	return moveAbsolute(encoderCounts, timeoutMilliseconds);
 }
 
 bool MCodeMotor::moveRelative(const int motorSteps, const unsigned int timeoutMilliseconds)

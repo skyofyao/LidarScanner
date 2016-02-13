@@ -24,6 +24,9 @@ private:
 	static const unsigned int MOTOR_RESPONSE_TIMEOUT_MILLISECONDS;
 	static const unsigned int MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS;
 
+	static const int DEFAULT_POSITION;
+	static const unsigned int ENCODER_COUNTS_PER_ROTATION;
+
 public:
 	MCodeMotor(const string& ipAddress, const unsigned int port);
 	bool connect();
@@ -38,6 +41,8 @@ public:
 		const unsigned int runCurrent = DEFAULT_RUN_CURRENT,
 		const unsigned int holdCurrent = DEFAULT_HOLD_CURRENT);
 	bool homeToIndex();
+	bool moveAngleRelative(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
+	bool moveAngleAbsolute(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
 	bool moveRelative(const int motorSteps, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
 	bool moveAbsolute(const int motorSteps, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
 	bool blockWhileMoving(const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
