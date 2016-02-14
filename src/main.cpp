@@ -1,8 +1,9 @@
-#include "Socket.hpp"
+#include "MCodeMotor.hpp"
 
 #include <iostream>
 #include <string>
-#include <unistd.h>
+#include <thread>
+#include <chrono>
 
 using namespace std;
 
@@ -11,24 +12,28 @@ const int port = 503;
 
 int main()
 {
-	Socket socket;
-	if (socket.connectToServer(ipAddress, port))
-	{
-		cout << "Connected!\n";
-	}
-	else
+	MCodeMotor motor(ipAddress, port);
+	if (!motor.connect())
 	{
 		return 1;
 	}
 
-	socket.sendString("EE 1\r\n"); // Encoder Enable
-	socket.sendString("A 10000\r\n"); // Set Acceleration
-	socket.sendString("D 50000\r\n"); // Set Decleration
-	socket.sendString("VI 100\r\n"); // Set Initial Velocity
-	socket.sendString("VM 1000\r\n"); // Set Maximum Velocity
-	socket.sendString("RC 80\r\n"); // Set Run Current to 80%
-	socket.sendString("HC 80\r\n"); // Set Hold Current to 80%
-	socket.sendString("MR 100\r\n"); // Move Relative
-	sleep(2);
-	socket.sendString("MR -100\r\n"); // Move Relative
+	motor.sendCommand("EE 1"); // Encoder Enable
+/*	while (true)
+	{
+		motor.sendCommand("PR I6"); // Read Encoder Count
+		sleep(0.25);
+		cout << socket.receiveString();
+	}*/
+	motor.initializeSettings();
+	motor.sendCommand("PR I6"); // Read Encoder at Index
+	motor.sendCommand("HI 3"); // Home to Index Mark
+	while (true)
+	{
+		cout << (motor.isMoving() ? "true" : "false") << endl;
+		this_thread::sleep_for(chrono::milliseconds(200));
+	}
+//	motor.sendCommand("MR 100"); // Move Relative
+//	sleep(2);
+//	motor.sendCommand("MR -100"); // Move Relative
 }
