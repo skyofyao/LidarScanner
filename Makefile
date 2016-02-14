@@ -19,7 +19,7 @@ DCOMPILE_FLAGS = -D DEBUG
 # Add additional include paths
 INCLUDES = -I $(SRC_PATH) -isystem include
 # General linker settings
-LINK_FLAGS = /usr/local/lib/liburg_cpp.a
+LINK_FLAGS = -L/usr/local/lib/ -lurg_cpp
 # Additional release-specific linker settings
 RLINK_FLAGS =
 # Additional debug-specific linker settings

@@ -8,8 +8,8 @@
 using namespace std;
 
 const unsigned int MCodeMotor::DEFAULT_ACCELERATION = 10000;
-const unsigned int MCodeMotor::DEFAULT_DECELERATION = 50000;
-const unsigned int MCodeMotor::DEFAULT_INITIAL_VELOCITY = 100;
+const unsigned int MCodeMotor::DEFAULT_DECELERATION = 10000;
+const unsigned int MCodeMotor::DEFAULT_INITIAL_VELOCITY = 0;
 const unsigned int MCodeMotor::DEFAULT_MAXIMUM_VELOCITY = 1000;
 const unsigned int MCodeMotor::DEFAULT_RUN_CURRENT = 80;
 const unsigned int MCodeMotor::DEFAULT_HOLD_CURRENT = 80;
@@ -32,7 +32,7 @@ bool MCodeMotor::connect()
 	return socket.connectToServer(ipAddress, port);
 }
 
-string MCodeMotor::sendCommand(const string& command)
+string& MCodeMotor::sendCommand(const string& command)
 {
 	socket.sendString(command + "\r\n");
 	response = socket.receiveString();
@@ -68,7 +68,7 @@ string MCodeMotor::sendCommand(const string& command)
 	return getResponse();
 }
 
-string MCodeMotor::getResponse()
+string& MCodeMotor::getResponse()
 {
 	return response;
 }
@@ -102,6 +102,11 @@ void MCodeMotor::initializeSettings(const unsigned int acceleration,
 	sendCommand("HC " + to_string(holdCurrent)); // Set Hold Current to 80%
 }
 
+void MCodeMotor::setMaximumVelocity(const unsigned int maximumVelocity)
+{
+	sendCommand("VM " + to_string(maximumVelocity)); // Set Maximum Velocity
+}
+
 bool MCodeMotor::homeToIndex()
 {
 	bool success = false;
@@ -115,9 +120,9 @@ bool MCodeMotor::homeToIndex()
 			this_thread::sleep_for(chrono::milliseconds(HOME_RETRY_DELAY_MILLISECONDS));
 		}
 		// Move to the left to make sure the motor is past the index mark
-		moveRelative(-20, 1000);
+		moveRelative(-20, 2000);
 		sendCommand("HI 3"); // Home to Index Mark
-		blockWhileMoving(2000);
+		blockWhileMoving(5000);
 		detectStall();
 		sendCommand("PR I6"); // Read Encoder at Index
 		success = getResponseBool(false);

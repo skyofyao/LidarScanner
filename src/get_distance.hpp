@@ -48,7 +48,7 @@ int get_distance()
     // Gets measurement data
     // Case where the measurement range (start/end steps) is defined
     urg.set_scanning_parameter(urg.deg2step(-135), urg.deg2step(+135), 0);
-    enum { Capture_times = 10 };
+    int Capture_times = 10;
     urg.start_measurement(Urg_driver::Distance_intensity, Urg_driver::Infinity_times, 0);
     for (int i = 0; i < Capture_times; ++i) {
         vector<long> data;
@@ -61,6 +61,7 @@ int get_distance()
         }
         print_data(urg, data, intensity, time_stamp);
     }
+	urg.stop_measurement();
     return 0;
 }
 

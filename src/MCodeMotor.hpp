@@ -30,8 +30,8 @@ private:
 public:
 	MCodeMotor(const string& ipAddress, const unsigned int port);
 	bool connect();
-	string sendCommand(const string& command);
-	string getResponse();
+	string& sendCommand(const string& command);
+	string& getResponse();
 	bool getResponseBool(bool defaultValue);
 	void initializeSettings(
 		const unsigned int acceleration = DEFAULT_ACCELERATION,
@@ -40,6 +40,7 @@ public:
 		const unsigned int maximumVelocity = DEFAULT_MAXIMUM_VELOCITY,
 		const unsigned int runCurrent = DEFAULT_RUN_CURRENT,
 		const unsigned int holdCurrent = DEFAULT_HOLD_CURRENT);
+	void setMaximumVelocity(const unsigned int maximumVelocity = DEFAULT_MAXIMUM_VELOCITY);
 	bool homeToIndex();
 	bool moveAngleRelative(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
 	bool moveAngleAbsolute(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);

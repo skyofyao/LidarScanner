@@ -25,7 +25,7 @@ bool Socket::hostServer(const unsigned int port)
 	// the socket function gives a negative value on not connecting
 	if (listenfd < 0)
 	{
-		cerr << "[Error] Cannot open socket" << endl;
+		cerr << "[Error] Cannot open socket on port " << port << endl;
 		return false;
 	}
 
@@ -38,7 +38,7 @@ bool Socket::hostServer(const unsigned int port)
 	// bind
 	if (bind(listenfd, (struct sockaddr*)&svradd, sizeof(svradd)) < 0)
 	{
-		cerr << "[Error] Error on binding\n";
+		cerr << "[Error] Error on binding port " << port << endl;
 		return false;
 	}
 
@@ -64,7 +64,7 @@ bool Socket::acceptConnection()
 	connfd = accept(listenfd, (struct sockaddr*) &cliadd, &clilen);
 	if (connfd < 0)
 	{
-		cerr << "[Error] Error receiving connection\n";
+		cerr << "[Error] Error receiving connection on port " << endl;
 		return false;
 	}
 	else
@@ -90,7 +90,7 @@ bool Socket::connectToServer(const string& ipAddress, const unsigned int port)
 	// the socket function gives a negative value on not connecting
 	if (connfd < 0)
 	{
-		cerr << "[Error] Cannot open socket" << endl;
+		cerr << "[Error] Cannot open socket to " << ipAddress << ":" << port << endl;
 		return false;
 	}
 
