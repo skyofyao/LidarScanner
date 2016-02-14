@@ -11,7 +11,7 @@
 
 using namespace std;
 
-bool Socket::hostServer(unsigned int port)
+bool Socket::hostServer(const unsigned int port)
 {
 	struct sockaddr_in svradd;
 
@@ -70,7 +70,7 @@ bool Socket::acceptConnection()
 	return true;
 }
 
-bool Socket::connectToServer(const string& ipAddress, unsigned int port)
+bool Socket::connectToServer(const string& ipAddress, const unsigned int port)
 {
 	struct sockaddr_in svradd;
 

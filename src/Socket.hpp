@@ -7,8 +7,8 @@ using namespace std;
 class Socket
 {
 public:
-	bool hostServer(unsigned int port);
-	bool connectToServer(const string& ipAddress, unsigned int port);
+	bool hostServer(const unsigned int port);
+	bool connectToServer(const string& ipAddress, const unsigned int port);
 	bool sendString(const string& message);
 	bool acceptConnection();
 	string receiveString();
