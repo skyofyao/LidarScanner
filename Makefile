@@ -17,9 +17,9 @@ RCOMPILE_FLAGS = -D NDEBUG
 # Additional debug-specific flags
 DCOMPILE_FLAGS = -D DEBUG
 # Add additional include paths
-INCLUDES = -I $(SRC_PATH) -isystem include
+INCLUDES = -I $(SRC_PATH) -isystem /usr/local/include/urg_cpp -isystem /usr/include/flycapture
 # General linker settings
-LINK_FLAGS = -L/usr/local/lib/ -lurg_cpp
+LINK_FLAGS = -L/usr/local/lib/ -lurg_cpp -lflycapture
 # Additional release-specific linker settings
 RLINK_FLAGS =
 # Additional debug-specific linker settings
