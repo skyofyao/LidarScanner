@@ -52,8 +52,8 @@ public:
 	unsigned int getMaximumVelocity();
 	unsigned int getRunCurrent();
 	unsigned int getHoldCurrent();
-	unsigned int getMoveRelativeTime(const float angle);
-	float getMoveRelativeAngleAtTime(const float angle, const unsigned int milliseconds)
+	unsigned int getMoveRelativeTime(const double angle);
+	double getMoveRelativeAngleAtTime(const double angle, const unsigned int milliseconds);
 	bool homeToIndex();
 	bool moveAngleRelative(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);
 	bool moveAngleAbsolute(const float angle, const unsigned int timeoutMilliseconds = BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS);

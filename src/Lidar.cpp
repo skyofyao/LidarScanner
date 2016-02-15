@@ -5,6 +5,7 @@
 #include <cmath>
 
 const unsigned int Lidar::RANGE = 135;
+const unsigned int Lidar::SCANS_PER_SECOND = 30;
 
 Lidar::Lidar(const string& ipAddress, const unsigned int port)
 	:	ipAddress(ipAddress)
@@ -29,7 +30,6 @@ bool Lidar::connect()
 vector<Lidar::DataPoint> Lidar::scan(const unsigned int milliseconds)
 {
 	vector<DataPoint> dataPoints;
-
 	chrono::steady_clock::time_point startTime = chrono::steady_clock::now();
 	urg.start_measurement(qrk::Urg_driver::Distance_intensity, qrk::Urg_driver::Infinity_times, 0);
 	while (chrono::duration_cast<std::chrono::milliseconds>(
@@ -58,6 +58,9 @@ void Lidar::processScan(vector<long>& data, vector<unsigned short>& intensity, l
 	long min_distance = urg.min_distance();
 	long max_distance = urg.max_distance();
 	size_t data_n = data.size();
+
+	// TODO get this to calculate things right
+	double timePerIndex = 1000.0 / SCANS_PER_SECOND / 360.0 / abs(urg.index2deg(1) - urg.index2deg(0));
 	for (size_t i = 0; i < data_n; ++i)
 	{
 		long l = data[i];
@@ -71,7 +74,7 @@ void Lidar::processScan(vector<long>& data, vector<unsigned short>& intensity, l
 		double y = l * sin(radian);
 
 		// TODO calculate actual timestamp
-		DataPoint point = {i, x, y, intensity[i], timeStamp};
+		DataPoint point = {i, x, y, intensity[i], timeStamp + (long)(timePerIndex * i)};
 		dataPoints.push_back(point);
 	}
 }

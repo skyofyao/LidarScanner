@@ -16,12 +16,11 @@ const string lidarIpAddress = "192.168.0.10";
 const int lidarPort = 10940;
 
 int main() 
-{	
-	/* Camera11 camera1;	
-	int i;
-	 camera1.cam_init();*/
+{
+//	Camera11 camera1;	
 
 	MCodeMotor motor(motorIpAddress, motorPort);
+
 	if (!motor.connect())
 	{
 		return 1;
@@ -42,8 +41,11 @@ int main()
 
 	Scanner scanner(lidar, motor);
 
+//	camera1.cam_init();
+
 	scanner.scan();
 
 	motor.moveAngleAbsolute(0);
+
 }
 

@@ -25,6 +25,7 @@ public:
 
 private:
 	static const unsigned int RANGE;
+	static const unsigned int SCANS_PER_SECOND;
 
 	const string ipAddress;
 	const unsigned int port;

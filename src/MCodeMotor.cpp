@@ -168,8 +168,12 @@ unsigned int MCodeMotor::getHoldCurrent()
 	return holdCurrent;
 }
 
-unsigned int MCodeMotor::getMoveRelativeTime(const float angle)
+unsigned int MCodeMotor::getMoveRelativeTime(const double angle)
 {
+	unsigned int maximumVelocity = getMaximumVelocity();
+	unsigned int acceleration = getAcceleration();
+	unsigned int deceleration = getDeceleration();
+
 	if (getInitialVelocity() != 0)
 	{
 		// TODO support non-zero initial velocity
@@ -177,32 +181,39 @@ unsigned int MCodeMotor::getMoveRelativeTime(const float angle)
 			<< "not supported." << endl;
 	}
 
-	unsigned int encoderCounts = abs(ceil((angle * ENCODER_COUNTS_PER_ROTATION) / 360));
+	double encoderCounts = abs(ceil(
+		angle * ENCODER_COUNTS_PER_ROTATION / 360.0));
 
 	// this uses doubles to prevent overflow and rounding
-	unsigned int rampUpCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
-		getAcceleration();
-	unsigned int rampDownCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
-		getDeceleration();
-	unsigned int rampCounts = rampUpCounts + rampDownCounts;
+	double rampUpCounts = 0.5 * maximumVelocity * maximumVelocity /
+		acceleration;
+	double rampDownCounts = 0.5 * maximumVelocity * maximumVelocity /
+		deceleration;
+	double rampCounts = rampUpCounts + rampDownCounts;
 
 	bool reachFullSpeed = encoderCounts >= rampCounts;
 
 	if (reachFullSpeed)
 	{
-		return 1000.0 * encoderCounts / getMaximumVelocity() +
-			1000.0 * getMaximumVelocity() * (getAcceleration() + getDeceleration()) /
-			(2 * (double)getAcceleration() * getDeceleration());
+		return 1000.0 * encoderCounts / maximumVelocity +
+			1000.0 * maximumVelocity * (acceleration + deceleration) /
+			(2 * (double)acceleration * deceleration);
 	}
 	else
 	{
-		return sqrt(2.0 * 1000 * 1000 *  encoderCounts * (getAcceleration() + getDeceleration()) /
-			(getAcceleration() * getDeceleration()));
+		return sqrt(2.0 * 1000 * 1000 *  encoderCounts * (acceleration + deceleration) /
+			(acceleration * deceleration));
 	}
 }
 
-float MCodeMotor::getMoveRelativeAngleAtTime(const float angle, const unsigned int milliseconds)
+double MCodeMotor::getMoveRelativeAngleAtTime(const double moveAngle, const unsigned int milliseconds)
 {
+	unsigned int maximumVelocity = getMaximumVelocity();
+	unsigned int acceleration = getAcceleration();
+	unsigned int deceleration = getDeceleration();
+
+	unsigned int moveTime = getMoveRelativeTime(moveAngle);
+
 	if (getInitialVelocity() != 0)
 	{
 		// TODO support non-zero initial velocity
@@ -210,24 +221,59 @@ float MCodeMotor::getMoveRelativeAngleAtTime(const float angle, const unsigned i
 			<< "not supported." << endl;
 	}
 
-	unsigned int encoderCounts = abs(ceil((angle * ENCODER_COUNTS_PER_ROTATION) / 360));
+	double encoderCounts = abs(ceil(
+			moveAngle * ENCODER_COUNTS_PER_ROTATION / 360.0));
 
 	// this uses doubles to prevent overflow and rounding
-	unsigned int rampUpCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
-		getAcceleration();
-	unsigned int rampDownCounts = 0.5 * getMaximumVelocity() * getMaximumVelocity() /
-		getDeceleration();
-	unsigned int moveTime = getMoveRelativeTime(angle)
+	double rampUpCounts = 0.5 * maximumVelocity * maximumVelocity /
+		acceleration;
+	double rampUpTime = 1000.0 * maximumVelocity / acceleration;
+
+	double rampDownCounts = 0.5 * maximumVelocity * maximumVelocity /
+		deceleration;
+	double rampDownTime = 1000.0 * maximumVelocity / deceleration;
+
+	double rampCounts = rampUpCounts + rampDownCounts;
+
+	double fullSpeedCounts = encoderCounts - rampCounts;
+	double fullSpeedTime = 1000.0 * fullSpeedCounts / maximumVelocity;
+
+	double fullTime = rampUpTime + rampDownTime + fullSpeedTime;
 
 	bool reachFullSpeed = encoderCounts >= rampCounts;
 
 	if (!reachFullSpeed)
 	{
 		// TODO support angle calcuation when motor does not reach maximum velocity
-		cerr << "[Error] Angle calculation not supported when motor does not reach maximum velocity" << endl;
+		cerr << "[Error] Angle calculation not supported when motor does not "
+			<< "reach maximum velocity" << endl;
 	}
 
-	// TODO
+	double countsTraveled;
+	if (milliseconds > moveTime)
+	{
+		// move complete
+		countsTraveled = encoderCounts;
+	}
+	else if (milliseconds < rampUpTime)
+	{
+		// ramping up
+		countsTraveled = 0.5 * acceleration * milliseconds / 1000.0 * milliseconds / 1000.0;
+		
+	}
+	else if (milliseconds > moveTime - rampDownTime)
+	{
+		// ramping down
+		double millisecondsRemaining = fullTime - milliseconds;
+		countsTraveled = encoderCounts - 0.5 * deceleration * millisecondsRemaining / 1000.0 * millisecondsRemaining / 1000.0;
+	}
+	else
+	{
+		// full speed
+		countsTraveled = rampUpCounts + maximumVelocity * (milliseconds - rampUpTime) / 1000.0;
+	}
+
+	return countsTraveled * 360.0 / ENCODER_COUNTS_PER_ROTATION;
 }
 
 bool MCodeMotor::homeToIndex()

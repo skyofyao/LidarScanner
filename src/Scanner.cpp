@@ -21,14 +21,20 @@ void Scanner::scan()
 
 	motor.moveAngleRelative(SCAN_SIZE, 0);
 
-	vector<Lidar::DataPoint> data = lidar.scan(motor.getMoveRelativeTime(SCAN_SIZE));
+	vector<Lidar::DataPoint> data = lidar.scan(10000);
 
 	// TODO process data
 
 	motor.blockWhileMoving(1000);
 
+	for (int i = 0; i < data.size(); i++)
+	{
+		Lidar::DataPoint p = data.at(i);
+		cout << p.timestamp << endl;
+	}
+
 	// return maximum velocity back to default
-	motor.setMaximumVelocity();
+	// motor.setMaximumVelocity();
 
 }
 

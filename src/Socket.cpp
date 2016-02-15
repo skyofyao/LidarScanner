@@ -33,7 +33,7 @@ bool Socket::hostServer(const unsigned int port)
 	memset((char *) &svradd, '\0',sizeof(svradd));
 	svradd.sin_family = AF_INET;
 	svradd.sin_addr.s_addr = INADDR_ANY;
-	svradd.sin_port = htons(500);
+	svradd.sin_port = htons(port);
 
 	// bind
 	if (bind(listenfd, (struct sockaddr*)&svradd, sizeof(svradd)) < 0)
