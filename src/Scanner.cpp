@@ -1,8 +1,11 @@
 #include "Scanner.hpp"
 
 #include <iostream>
+#include <cmath>
 
 using namespace std;
+
+const double PI = 3.141592653589793238;
 
 const int Scanner::SCAN_CENTER = 0;
 const int Scanner::SCAN_SIZE = 90;
@@ -21,20 +24,29 @@ void Scanner::scan()
 
 	motor.moveAngleRelative(SCAN_SIZE, 0);
 
-	vector<Lidar::DataPoint> data = lidar.scan(10000);
-
-	// TODO process data
+	vector<Lidar::DataPoint> data = lidar.scan(motor.getMoveRelativeTime(SCAN_SIZE));
 
 	motor.blockWhileMoving(1000);
 
-	for (int i = 0; i < data.size(); i++)
+	long startTime = data.at(0).timestamp;
+	// process data
+	for (unsigned int i = 0; i < data.size(); i++)
 	{
-		Lidar::DataPoint p = data.at(i);
-		cout << p.timestamp << endl;
+		Lidar::DataPoint point = data.at(i);
+		double angle = -(motor.getMoveRelativeAngleAtTime(SCAN_SIZE, point.timestamp - startTime) -
+			(SCAN_SIZE / 2.0)) * PI / 180;
+
+		// convert from cylindrical to orthagonal coordinates
+		DataPoint newPoint;
+		newPoint.x = point.x * cos(angle);
+		newPoint.y = point.x * sin(angle);
+		newPoint.z = point.y;
+		newPoint.intensity = point.intensity;
+		lidarData.push_back(newPoint);
 	}
 
 	// return maximum velocity back to default
-	// motor.setMaximumVelocity();
+	motor.setMaximumVelocity();
 
 }
 

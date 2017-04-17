@@ -10,8 +10,8 @@ public:
 	{
 		double x;
 		double y;
+		double z;
 		unsigned short intensity;
-		double angle;
 	};
 
 	Scanner(Lidar& lidar, MCodeMotor& motor);
