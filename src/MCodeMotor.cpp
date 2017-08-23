@@ -7,50 +7,55 @@
 
 using namespace std;
 
-const unsigned int MCodeMotor::DEFAULT_ACCELERATION = 10000;
-const unsigned int MCodeMotor::DEFAULT_DECELERATION = 10000;
-const unsigned int MCodeMotor::DEFAULT_INITIAL_VELOCITY = 0;
-const unsigned int MCodeMotor::DEFAULT_MAXIMUM_VELOCITY = 1000;
-const unsigned int MCodeMotor::DEFAULT_RUN_CURRENT = 80;
-const unsigned int MCodeMotor::DEFAULT_HOLD_CURRENT = 80;
-const unsigned int MCodeMotor::BLOCKING_REFRESH_RATE_MILLISECONDS = 50;
-const unsigned int MCodeMotor::BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS = 10000;
-const unsigned int MCodeMotor::HOME_RETRYS = 5;
-const unsigned int MCodeMotor::HOME_RETRY_DELAY_MILLISECONDS = 1000;
-const unsigned int MCodeMotor::MOTOR_RESPONSE_TIMEOUT_MILLISECONDS = 500;
-const unsigned int MCodeMotor::MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS = 5;
-const int MCodeMotor::DEFAULT_POSITION = -1322;
-const unsigned int MCodeMotor::ENCODER_COUNTS_PER_ROTATION = 4000;
+// acceleration of motor 
+const unsigned int MCodeMotor::DEFAULT_ACCELERATION = 10000;			
+// deceleration of motor // both are kept same for easy calculation purposes	
+const unsigned int MCodeMotor::DEFAULT_DECELERATION = 10000;				
+const unsigned int MCodeMotor::DEFAULT_INITIAL_VELOCITY = 0;				// initial velocity of motor // kept 0 for easy calculation purposes
+const unsigned int MCodeMotor::DEFAULT_MAXIMUM_VELOCITY = 1000;				//maximum velocity attained by the motor
+const unsigned int MCodeMotor::DEFAULT_RUN_CURRENT = 80;					// current at run time 
+const unsigned int MCodeMotor::DEFAULT_HOLD_CURRENT = 80;					// current at hold time
+const unsigned int MCodeMotor::BLOCKING_REFRESH_RATE_MILLISECONDS = 50;		// check for anything blocking the motor rate ///// Time in milliseconds to poll the motor when blocking execution until the motor stops.
+const unsigned int MCodeMotor::BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS = 10000;	// maximum time till which motor can sustain block ///// Maximum time to block execution when waiting for the motor to stop.
+const unsigned int MCodeMotor::HOME_RETRYS = 5;								// number of tries made by the motor to reach home location before giving up
+const unsigned int MCodeMotor::HOME_RETRY_DELAY_MILLISECONDS = 1000;		// time difference between 2 retries of motor to reach home location
+const unsigned int MCodeMotor::MOTOR_RESPONSE_TIMEOUT_MILLISECONDS = 500;	// maximum time waiting for the motor to respond to a given command
+const unsigned int MCodeMotor::MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS = 5;	// wait time for motor to respond to the given command
+const int MCodeMotor::DEFAULT_POSITION = -1322;								// displacement in terms of encoder counts the new home location with respect to the old one
+const unsigned int MCodeMotor::ENCODER_COUNTS_PER_ROTATION = 4000;			// total number of encoder counts present per location
 
-MCodeMotor::MCodeMotor(const string& ipAddress, const unsigned int port)
+/// creats a new MCodeMotor Code
+MCodeMotor::MCodeMotor(const string& ipAddress, const unsigned int port)	
 	:	ipAddress(ipAddress)
 	,	port(port)
 	,	socket() {}
 
+/// connect to motor
 bool MCodeMotor::connect()
 {
 	return socket.connectToServer(ipAddress, port);
 }
 
+/// sends command to motor
 string& MCodeMotor::sendCommand(const string& command)
 {
-	socket.sendString(command + "\r\n");
-	response = socket.receiveString();
+	socket.sendString(command + "\r\n");	// motor recognises the command only if it has \r\n at its end hence appended at last
+	response = socket.receiveString();		// capture the response from motor
 
 	// Each response from the motor ends with a '?' or '>'.
-	// Check to see that a '?' was recieved before continuing.
-	chrono::steady_clock::time_point recieveStartTime = chrono::steady_clock::now();
-	while ((getResponse().find('?') == string::npos && getResponse().find('>') == string::npos) &&
-		(chrono::duration_cast<std::chrono::milliseconds>(
+	// Check to see that a '?' or '>' was recieved before continuing.
+	chrono::steady_clock::time_point recieveStartTime = chrono::steady_clock::now(); 				// returns a time point representing the current time 
+	while ((getResponse().find('?') == string::npos && getResponse().find('>') == string::npos) &&	// if the response is not '?' == -1 or not '>' == -1 AND
+		(chrono::duration_cast<std::chrono::milliseconds>(											// time duration between current and received time is less than timout time 
 			chrono::steady_clock::now() - recieveStartTime).count() <=
 			MOTOR_RESPONSE_TIMEOUT_MILLISECONDS))
 	{
-		this_thread::sleep_for(chrono::milliseconds(MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS));
-		response = response + socket.receiveString();
+		this_thread::sleep_for(chrono::milliseconds(MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS));		// wait for next response
+		response = response + socket.receiveString();												// add new response to old response	
 	}
 
 
-	if (getResponse().find('?') == string::npos && getResponse().find('>') == string::npos)
+	if (getResponse().find('?') == string::npos && getResponse().find('>') == string::npos)			// again find if the response is not '?' ==-1 or not '>' == -1
 	{
 		cout << response << endl;
 		// The response does not contain a '?' or '>'.
@@ -276,10 +281,12 @@ double MCodeMotor::getMoveRelativeAngleAtTime(const double moveAngle, const unsi
 	return countsTraveled * 360.0 / ENCODER_COUNTS_PER_ROTATION;
 }
 
+
+// move the motor to the new home location aligned parallel with the frame of motor 
 bool MCodeMotor::homeToIndex()
 {
-	bool success = false;
-	for (unsigned int i = 0; i < HOME_RETRYS && !success; i++)
+	bool success = false;	
+	for (unsigned int i = 0; i < HOME_RETRYS && !success; i++) 
 	{
 		if (i != 0)
 		{

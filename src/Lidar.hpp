@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <string>
@@ -15,7 +16,7 @@ public:
 		double x;
 		double y;
 		unsigned short intensity;
-		long timestamp;
+		long timestamp;	// From starting time
 	};
 
 

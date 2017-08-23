@@ -1,3 +1,12 @@
+/***********************************************************************/
+// This is a header managing methods of controlling motor AND lidar as a /
+// Scanner. 
+// Scanner has two operation modes:
+// 1. Continuous scanning mode (contScan()), in which lidar keeps scanning, while motor /
+// moves at constant speed, without stops
+// 2. Step scanning mode(stepScan()), in which scan only once after the motor was moved /
+// in a small angle. 
+/*************************************************************************/
 #pragma once
 
 #include "Lidar.hpp"
@@ -13,9 +22,18 @@ public:
 		double z;
 		unsigned short intensity;
 	};
+	
+	struct DataRaw // The raw data used to represent each data point 
+	{
+		double dis; // in mm
+		double angle_scan; // lidar angle, 
+		double angle_motor; // motor angle, from motor home position
+		unsigned short intensity;
+	}
 
 	Scanner(Lidar& lidar, MCodeMotor& motor);
-	void scan();
+	void contScan(); 	// Scanning mode one, continuous
+	void stepScan();	// Scanning mode two, stepping motor
 	vector<DataPoint> getLidarData();
 
 private:
