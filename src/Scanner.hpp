@@ -26,14 +26,15 @@ public:
 	struct DataRaw // The raw data used to represent each data point 
 	{
 		double dis; // in mm
-		double angle_scan; // lidar angle, 
-		double angle_motor; // motor angle, from motor home position
+		double angle_scan; // lidar angle, in deg
+		double angle_motor; // motor angle, from motor home position, in deg
 		unsigned short intensity;
 	}
 
 	Scanner(Lidar& lidar, MCodeMotor& motor);
-	void contScan(); 	// Scanning mode one, continuous
-	void stepScan();	// Scanning mode two, stepping motor
+	void contScan(float scan_size = SCAN_SIZE, float scan_velocity = SCAN_VELOCITY, float scan_center = SCAN_CENTER); 	// Scanning mode one, continuous
+	//void contScan(float scan_size, int scan_lines, float line_size, float scan_center = SCAN_CENTER);
+	void stepScan(float scan_size, int scan_lines, float line_size, float scan_center = SCAN_CENTER);	// Scanning mode two, stepping motor
 	vector<DataPoint> getLidarData();
 
 private:
@@ -44,5 +45,9 @@ private:
 	Lidar& lidar;
 	MCodeMotor& motor;
 	vector<DataPoint> lidarData;
+	vector<DataRaw> lidarRawData;
+	// status:
+	bool _is_motor_read = false;
+	bool _is_lidar_ready = false;
 };
 

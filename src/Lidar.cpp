@@ -24,10 +24,11 @@ bool Lidar::connect()
 	cout << "[Info] Connected to lidar on " << ipAddress << ":" << port << endl;
 
 	urg.set_scanning_parameter(urg.deg2step(-RANGE), urg.deg2step(+RANGE), 0);
+	is_conneceted = true;
 	return true;
 }
 
-vector<Lidar::DataPoint> Lidar::scan(const unsigned int milliseconds)
+vector<Lidar::DataPoint> Lidar::scan_time(float line_size, const unsigned int milliseconds)
 {
 	vector<DataPoint> dataPoints;
 	chrono::steady_clock::time_point startTime = chrono::steady_clock::now();
@@ -53,13 +54,32 @@ vector<Lidar::DataPoint> Lidar::scan(const unsigned int milliseconds)
 	return dataPoints;
 }
 
-void Lidar::processScan(vector<long>& data, vector<unsigned short>& intensity, long timestamp, vector<DataPoint>& dataPoints)
+// Perform only one scan
+/* Param: line_size: for each scan, define the size in which data is valid, in deg
+*/
+vector<Lidar::DataPointRaw> Lidar::scan_once(float line_size)
+{
+	vector<DataPointRaw> dataPoints;
+	urg.start_measurement(qrk::Urg_driver::Distance_intensity, qrk::Urg_driver::Infinity_times, 0);
+	
+	vector<long> data;
+	vector<unsigned short> intensity;
+	if (!urg.get_distance_intensity(data, intensity, &timestamp))
+	{
+		cout << "Urg_driver::get_distance(): " << urg.what() << endl;
+		//return 1; TODO handle this properly
+	}
+	processScanRaw(data, intensity, timestamp, dataPoints, line_size);
+	
+	return dataPoints;
+}
+
+void Lidar::processScan(vector<long>& data, vector<unsigned short>& intensity, long timestamp, vector<DataPoint>& dataPoints, float line_size)
 {
 	long minDistance = urg.min_distance();
 	long maxDistance = urg.max_distance();
 	size_t data_n = data.size();
 
-	// TODO get this to calculate things right
 	double timePerIndex = 1000.0 * abs(urg.index2deg(1) - urg.index2deg(0)) / SCANS_PER_SECOND / 360.0;
 	for (size_t i = 0; i < data_n; ++i)
 	{
@@ -73,9 +93,44 @@ void Lidar::processScan(vector<long>& data, vector<unsigned short>& intensity, l
 		double x = l * cos(radian);
 		double y = l * sin(radian);
 
-		// TODO calculate actual timestamp
+		// calculate actual timestamp
 		DataPoint point = {i, x, y, intensity[i], timestamp + (long)(timePerIndex * i)};
 		dataPoints.push_back(point);
 	}
+}
+
+// Store the scaned data into a vector, storing: dis, angle, intensity, and time
+/*	@param data - Sensor output distance array
+	@param intensity - Sensor output intensity array
+	@param timestamp - Sensor output time stemp, (from scanning start)
+	@param dataPoints - Input & Output, the vector sotring values, append values at the end
+*/
+void Lidar::processScanRaw(vector<long>& data, vector<unsigned short>& intensity, long timestamp, vector<DataPointRaw>& dataPoints, float line_size)
+{
+	long minDistance = urg.min_distance();
+	long maxDistance = urg.max_distance();
+	size_t data_n = data.size();
+
+	int idx_mid = MAX_STEPS / 2;
+	int idx_min = idx_mid - line_size / ANGULAR_RES / 2;
+	int idx_max = idx_mid + line_size / ANGULAR_RES / 2;
+	
+	// TODO get this to calculate things right
+	double timePerIndex = 1000.0 * abs(urg.index2deg(1) - urg.index2deg(0)) / SCANS_PER_SECOND / 360.0;
+	int n_valid = 0;
+	vector<DataPointRaw> data_current_scan;
+	for (size_t i = idx_min; i < idx_max; ++i)
+	{
+		long l = data[i];
+		if ((l >= minDistance) && (l <= maxDistance) && )
+		{
+			DataPointRaw point = {l, urg.index2rad(i), intensity[i], timestamp + (long)(timePerIndex * i)};
+			data_current_scan[n_valid] = point;
+			n_valid++;
+		}
+	}
+	data_current_scan.resize(n_valid);
+	// Append to the end of the output vector
+	dataPoints.insert(dataPoints.end(), data_current_scan.begin(), data_current_scan.end());
 }
 

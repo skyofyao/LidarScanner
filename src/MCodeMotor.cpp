@@ -15,7 +15,7 @@ const unsigned int MCodeMotor::DEFAULT_INITIAL_VELOCITY = 0;				// initial veloc
 const unsigned int MCodeMotor::DEFAULT_MAXIMUM_VELOCITY = 1000;				//maximum velocity attained by the motor
 const unsigned int MCodeMotor::DEFAULT_RUN_CURRENT = 80;					// current at run time 
 const unsigned int MCodeMotor::DEFAULT_HOLD_CURRENT = 80;					// current at hold time
-const unsigned int MCodeMotor::BLOCKING_REFRESH_RATE_MILLISECONDS = 50;		// check for anything blocking the motor rate ///// Time in milliseconds to poll the motor when blocking execution until the motor stops.
+const unsigned int MCodeMotor::BLOCKING_REFRESH_RATE_MILLISECONDS = 30;		// check for anything blocking the motor rate ///// Time in milliseconds to poll the motor when blocking execution until the motor stops.
 const unsigned int MCodeMotor::BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS = 10000;	// maximum time till which motor can sustain block ///// Maximum time to block execution when waiting for the motor to stop.
 const unsigned int MCodeMotor::HOME_RETRYS = 5;								// number of tries made by the motor to reach home location before giving up
 const unsigned int MCodeMotor::HOME_RETRY_DELAY_MILLISECONDS = 1000;		// time difference between 2 retries of motor to reach home location
@@ -23,6 +23,7 @@ const unsigned int MCodeMotor::MOTOR_RESPONSE_TIMEOUT_MILLISECONDS = 500;	// max
 const unsigned int MCodeMotor::MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS = 5;	// wait time for motor to respond to the given command
 const int MCodeMotor::DEFAULT_POSITION = -1322;								// displacement in terms of encoder counts the new home location with respect to the old one
 const unsigned int MCodeMotor::ENCODER_COUNTS_PER_ROTATION = 4000;			// total number of encoder counts present per location
+//const unsigned int MCodeMotor::MICRO_STEPS_PER_ROTATION = 51200;			// Total number of microsteps counts per revolutaion
 
 /// creats a new MCodeMotor Code
 MCodeMotor::MCodeMotor(const string& ipAddress, const unsigned int port)	
@@ -33,7 +34,7 @@ MCodeMotor::MCodeMotor(const string& ipAddress, const unsigned int port)
 /// connect to motor
 bool MCodeMotor::connect()
 {
-	return socket.connectToServer(ipAddress, port);
+	return is_connected = socket.connectToServer(ipAddress, port);
 }
 
 /// sends command to motor
@@ -98,7 +99,7 @@ void MCodeMotor::initializeSettings(const unsigned int acceleration,
 	const unsigned int holdCurrent)
 {
 	sendCommand("ST 0"); // Reset Stall Flag
-	sendCommand("EE 1"); // Enable Encoder
+	sendCommand("EE 1"); // Enable Encoder, all units based on encoder
 	setAcceleration(acceleration);
 	setDeceleration(deceleration);
 	setInitialVelocity(initialVelocity);
@@ -127,7 +128,7 @@ void MCodeMotor::setInitialVelocity(const unsigned int initialVelocity)
 
 void MCodeMotor::setMaximumVelocity(const unsigned int maximumVelocity)
 {
-	sendCommand("VM " + to_string(maximumVelocity)); // Set Maximum Velocity
+	sendCommand("VM " + to_string(maximumVelocity)); // Set Maximum Velocity (steps per second)
 	this->maximumVelocity = maximumVelocity;
 }
 

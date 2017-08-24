@@ -52,6 +52,9 @@ private:
 
 	// Number of encoder counts in a single rotation.
 	static const unsigned int ENCODER_COUNTS_PER_ROTATION;
+	
+	// Number of microsteps in a single rotation.
+	//static const unsigned int MICRO_STEPS_PER_ROTATION;
 
 public:
 	/// Constructs a new McodeMotor.
@@ -176,6 +179,7 @@ public:
 	/// \returns True if a stall was detected.
 	bool detectStall();
 
+	bool is_connected = false;
 private:
 	const string ipAddress;
 	const unsigned int port;
@@ -187,5 +191,7 @@ private:
 	unsigned int maximumVelocity;
 	unsigned int runCurrent;
 	unsigned int holdCurrent;
+	
+	
 };
 
