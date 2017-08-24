@@ -29,7 +29,7 @@ public:
 		double angle_scan; // lidar angle, in deg
 		double angle_motor; // motor angle, from motor home position, in deg
 		unsigned short intensity;
-	}
+	};
 
 	Scanner(Lidar& lidar, MCodeMotor& motor);
 	void contScan(float scan_size = SCAN_SIZE, float scan_velocity = SCAN_VELOCITY, float scan_center = SCAN_CENTER); 	// Scanning mode one, continuous
@@ -47,7 +47,7 @@ private:
 	vector<DataPoint> lidarData;
 	vector<DataRaw> lidarRawData;
 	// status:
-	bool _is_motor_read = false;
+	bool _is_motor_ready = false;
 	bool _is_lidar_ready = false;
 };
 

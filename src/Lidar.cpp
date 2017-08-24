@@ -6,6 +6,7 @@
 
 const unsigned int Lidar::RANGE = 135;
 const unsigned int Lidar::SCANS_PER_SECOND = 40;
+static const float	LIDAR_ANGULAR_RES = 0.25;
 
 Lidar::Lidar(const string& ipAddress, const unsigned int port)
 	:	ipAddress(ipAddress)
@@ -24,11 +25,11 @@ bool Lidar::connect()
 	cout << "[Info] Connected to lidar on " << ipAddress << ":" << port << endl;
 
 	urg.set_scanning_parameter(urg.deg2step(-RANGE), urg.deg2step(+RANGE), 0);
-	is_conneceted = true;
+	is_connected = true;
 	return true;
 }
 
-vector<Lidar::DataPoint> Lidar::scan_time(float line_size, const unsigned int milliseconds)
+vector<Lidar::DataPoint> Lidar::scan_time(const unsigned int milliseconds, float line_size)
 {
 	vector<DataPoint> dataPoints;
 	chrono::steady_clock::time_point startTime = chrono::steady_clock::now();
@@ -64,6 +65,7 @@ vector<Lidar::DataPointRaw> Lidar::scan_once(float line_size)
 	
 	vector<long> data;
 	vector<unsigned short> intensity;
+	long timestamp = 0;
 	if (!urg.get_distance_intensity(data, intensity, &timestamp))
 	{
 		cout << "Urg_driver::get_distance(): " << urg.what() << endl;
@@ -112,8 +114,8 @@ void Lidar::processScanRaw(vector<long>& data, vector<unsigned short>& intensity
 	size_t data_n = data.size();
 
 	int idx_mid = MAX_STEPS / 2;
-	int idx_min = idx_mid - line_size / ANGULAR_RES / 2;
-	int idx_max = idx_mid + line_size / ANGULAR_RES / 2;
+	int idx_min = idx_mid - line_size / LIDAR_ANGULAR_RES / 2;
+	int idx_max = idx_mid + line_size / LIDAR_ANGULAR_RES / 2;
 	
 	// TODO get this to calculate things right
 	double timePerIndex = 1000.0 * abs(urg.index2deg(1) - urg.index2deg(0)) / SCANS_PER_SECOND / 360.0;
@@ -122,7 +124,7 @@ void Lidar::processScanRaw(vector<long>& data, vector<unsigned short>& intensity
 	for (size_t i = idx_min; i < idx_max; ++i)
 	{
 		long l = data[i];
-		if ((l >= minDistance) && (l <= maxDistance) && )
+		if ((l >= minDistance) && (l <= maxDistance))
 		{
 			DataPointRaw point = {l, urg.index2rad(i), intensity[i], timestamp + (long)(timePerIndex * i)};
 			data_current_scan[n_valid] = point;

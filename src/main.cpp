@@ -49,7 +49,7 @@ int main()
 	commandReceived = serverSocket.receiveString ();
 	cout << commandReceived <<endl;
 */
-/*
+
 	/// Init sensors and motors
 
 	Camera11 camera1;										// intializing object of class camera
@@ -81,14 +81,15 @@ int main()
 	Scanner scanner(lidar, motor);							// initialize object of class Scanner
 
 	camera1.cam_init();										// take a picture using camera
-*/
+
 	// Data acqusition loop
 	while(1)
 	{
 		std::cout<<"Input parameters"<<endl;
 		// Parameter format: 
 		// "[char:scanType] [str:filename] [float:scan_size] [int:scan_lines] [float:lidarScanSize] [float:scan_center]"
-		string input_str = getline(cin,input_str);
+		string input_str;
+		getline(cin,input_str);
 		stringstream str_stm = stringstream(input_str);
 		// Parameters
 		char scan_type; // 'O' for orginal, 'S' for step, 'C' for continuous, others for exit
@@ -100,6 +101,7 @@ int main()
 		// Parse parameters
 		str_stm >> scan_type;
 		str_stm >> filename_pfx;
+		string filename = "../photos/";
 		switch(scan_type)
 		{
 			case 'O':
@@ -112,10 +114,11 @@ int main()
 				str_stm >> scan_lines;
 				str_stm >> lidar_scan_size;
 				str_stm >> scan_center;
-				std::cout<<"Parameters: "<<scanSize<<", " <<scan_lines<<", "<<lidar_scan_size<<", "<<scan_center<<endl;
-				string filename = "../photos/";
+				std::cout<<"Parameters: "<<scan_size<<", " <<scan_lines<<", "<<lidar_scan_size<<", "<<scan_center<<endl;
+				
 				filename.append(filename_pfx);
 				filename.append(".pcd");
+				std::cout<<"file path"<<filename<<std::endl;
 				continue;
 			break;
 			default:
@@ -138,6 +141,7 @@ int main()
 		savePCD(data, filename);
 
 		cout << "done!" << endl;	
+		
 	}	
 
 	return 0;

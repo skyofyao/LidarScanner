@@ -24,7 +24,7 @@ public:
 		double radian;
 		unsigned short intensity;
 		long timestamp;// if possible
-	}
+	};
 
 	Lidar(const string& ipAddress, const unsigned int port);
 	bool connect();
@@ -38,7 +38,7 @@ private:
 	
 	static const unsigned int MAX_STEPS = 1080;
 	static const unsigned int MAX_ANGLE = 270; // in deg
-	static const float	ANGULAR_RES = 0.25;
+
 
 	const string ipAddress;
 	const unsigned int port;

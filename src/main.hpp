@@ -1,6 +1,7 @@
 #pragma once
-#include <iostram>
-#include "scanner.hpp"
+#include <iostream>
+#include <fstream>
+#include "Scanner.hpp"
 
 using namespace std;
 void savePCD(std::vector<Scanner::DataPoint> data, std::string filename)
@@ -49,7 +50,7 @@ void saveRaw(std::vector<Scanner::DataRaw> data, std::string filename)
 
 		for (unsigned int i = 0; i < data.size(); i++)			
 		{
-			Scanner::Raw point = data.at(i);				// picking data at each row
+			Scanner::DataRaw point = data.at(i);				// picking data at each row
 			stlfile << point.dis << " " << point.angle_scan << " " << point.angle_motor << " " << point.intensity << endl;		// printing x, y, z, intensity from each data row 
 		}
 		stlfile.close();				
