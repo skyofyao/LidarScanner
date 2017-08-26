@@ -192,384 +192,395 @@ void Camera11::PrintFormat7Capabilities(Format7Info fmt7Info)
 //int cam_init()
 //{
 	
-			
-int Camera11::cam_init()
+	
+int CameraPair::camPair_connect()
 {
-	
-	ostringstream filename;
-	
+	Error error1, error2, errorG;
 	//To print the Build Info
-	PrintBuildInfo();
-	
-
+	//PrintBuildInfo();
 	
 	//
 	// Class BusManager used to find the number of cameras in the Bus
 	//
+	int numCameras;
+	int init_tries = 0;
+	while(init_tries < INIT_MAX_TRIES)
+	{
+		//Getting the number of cameras in the bus
+		errorG = busMgr.GetNumOfCameras(&numCameras);
 
+		//Checking for Error
+		if (errorG != PGRERROR_OK)
+		{
+			PrintError(errorG);
+			return -1;
+		}
+
+		cout << "Number of cameras detected: " << numCameras << endl;
+		
+		//To check if atleast one camera is attached
+		if (numCameras < 2)
+		{
+			cout << "Insufficient number of cameras... exiting" << endl;
+			return -1;
+		}
+		
+		//
+		//Gets the serial number of the camera connected by the index
+		//
+		error1 = busMgr.GetCameraFromIndex(0, &cam1.guid);
+		error2 = busMgr.GetCameraFromIndex(1, &cam2.guid);
+
+		//Checking for error
+		if (error1 != PGRERROR_OK || error2 != PGRERROR_OK)
+		{
+			PrintError(error1);
+			PrintError(error2);
+			return -1;
+		}
+
+		// Connect to a camera with the serial number fetched
+		error1 = cam1.connect();
+		error2 = cam2.connect();
+		
+		if (error1 != PGRERROR_OK || error2 != PGRERROR_OK)
+		{
+			PrintError(error1);
+			PrintError(error2);
+			return -1;
+		}
+	}
+}
+
+int Camera11::cam_connect()
+{
+	Error error;
+	error = cam.Connect(&guid);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+	//
+	// Power on the camera
+	//To begin Power up process set 610h to all 1
+	//
+	const unsigned int k_cameraPower = 0x610;
+    const unsigned int k_powerVal = 0x80000000;
+	const unsigned int millisecondsToSleep = 100;
+    unsigned int regVal = 0;
+    unsigned int retries = 10;
+	error = cam.WriteRegister(k_cameraPower, k_powerVal);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 	
+	//
+	//Waiting for the camera to power up 
+	//by querying the 31 bit of 610h
+	//
+	//const unsigned int millisecondsToSleep = 100;
+	//unsigned int regVal = 0;
+	//unsigned int retries = 10;
 
-	//Getting the number of cameras in the bus
-	error = busMgr.GetNumOfCameras(&numCameras);
+	// Wait for camera to complete power-up
+	cout << "powering up camera" << endl;
+	do
+	{
+#if defined(WIN32) || defined(WIN64)
+		Sleep(millisecondsToSleep);
+#elif defined(LINUX)
+		struct timespec nsDelay;
+		nsDelay.tv_sec = 0;
+		nsDelay.tv_nsec = (long)millisecondsToSleep * 1000000L;
+		nanosleep(&nsDelay, NULL);
+#endif
+		//
+		//Reading the value of the register 610h
+		//
+		error = cam.ReadRegister(k_cameraPower, &regVal);
+		if (error == PGRERROR_TIMEOUT)
+		{
+			// ignore timeout errors, camera may not be responding to
+			// register reads during power-up
+		}
+		else if (error != PGRERROR_OK)
+		{
+			PrintError(error);
+			return -1;
+		}
 
-	//Checking for Error
+		retries--;
+	} while ((regVal & k_powerVal) == 0 && retries > 0); //Retry for 10 times
+
+	// Check for timeout errors after retrying
+	if (error == PGRERROR_TIMEOUT)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	// Get the camera information
+	cout << "getting camera info" << endl;
+	CameraInfo camInfo;
+	error = cam.GetCameraInfo(&camInfo);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+		
+	//Set Cam_num variable according to serialNumber
+	if (camInfo.serialNumber == 15435734)
+	{cam_num = "l";}
+	else if (camInfo.serialNumber == 15435724) 
+	{cam_num = "r";}
+}
+			
+int Camera11::cam_init()
+{
+	//
+	//Main Aim is to set the width and height
+	//To check whether the format 7 mode is supported 
+	//will give error if not	
+	// Query for available Format 7 modes
+	//
+	Format7Info fmt7Info;
+	bool supported;
+	fmt7Info.mode = k_fmt7Mode; // will return true if format7 is supported
+	error = cam.GetFormat7Info(&fmt7Info, &supported);
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
 		return -1;
 	}
 
-	cout << "Number of cameras detected: " << numCameras << endl;
+//	PrintFormat7Capabilities(fmt7Info); // Prints the format7 features
 
-	//To check if atleast one camera is attached
-	if (numCameras < 1)
+	if ((k_fmt7PixFmt & fmt7Info.pixelFormatBitField) == 0)
 	{
-		cout << "Insufficient number of cameras... exiting" << endl;
+		// Pixel format not supported!
+		cout << "Pixel format is not supported" << endl;
 		return -1;
 	}
 
-	for (int z = 0; z<numCameras; z++)
-	
+	//Setting the format7 features
+	//Setting the max width and height
+	//Setting the pixel format
+	//Format7ImageSettings fmt7ImageSettings;
+	fmt7ImageSettings.mode = k_fmt7Mode;
+	fmt7ImageSettings.offsetX = 0;
+	fmt7ImageSettings.offsetY = 0;
+	fmt7ImageSettings.width = fmt7Info.maxWidth;
+	fmt7ImageSettings.height = fmt7Info.maxHeight;
+	fmt7ImageSettings.pixelFormat = k_fmt7PixFmt;
+
+	//bool valid;
+	//Format7PacketInfo fmt7PacketInfo;
+
+	//To chck whether the settings are accepted
+	// Validate the settings to make sure that they are valid
+	error = cam.ValidateFormat7Settings(
+		&fmt7ImageSettings,
+		&valid,
+		&fmt7PacketInfo);
+	if (error != PGRERROR_OK)
 	{
-		cout << "running  loop" << endl; 
+		PrintError(error);
+		return -1;
+	}
 
-		//PGRGuid guid;
-		//
-		//Gets the serial number of the camera connected by the index
-		//
-		error = busMgr.GetCameraFromIndex(z, &guid);
+	if (!valid)
+	{
+		// Settings are not valid
+		cout << "Format7 settings are not valid" << endl;
+		return -1;
+	}
 
-		//Checking for error
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-
-
-		// Connect to a camera with the serial number fetched
-		error = cam.Connect(&guid);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-		
-		//
-		// Power on the camera
-		//To begin Power up process set 610h to all 1
-		//
-		//const unsigned int k_cameraPower = 0x610;
-		//const unsigned int k_powerVal = 0x80000000;
-		error = cam.WriteRegister(k_cameraPower, k_powerVal);
-
-		//Check for errors
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		//
-		//Waiting for the camera to power up 
-		//by querying the 31 bit of 610h
-		//
-		//const unsigned int millisecondsToSleep = 100;
-		//unsigned int regVal = 0;
-		//unsigned int retries = 10;
-
-		// Wait for camera to complete power-up
-		cout << "powering up camera" << endl;
-		do
-		{
-#if defined(WIN32) || defined(WIN64)
-			Sleep(millisecondsToSleep);
-#elif defined(LINUX)
-			struct timespec nsDelay;
-			nsDelay.tv_sec = 0;
-			nsDelay.tv_nsec = (long)millisecondsToSleep * 1000000L;
-			nanosleep(&nsDelay, NULL);
-#endif
-			//
-			//Reading the value of the register 610h
-			//
-			error = cam.ReadRegister(k_cameraPower, &regVal);
-			if (error == PGRERROR_TIMEOUT)
-			{
-				// ignore timeout errors, camera may not be responding to
-				// register reads during power-up
-			}
-			else if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				return -1;
-			}
-
-			retries--;
-		} while ((regVal & k_powerVal) == 0 && retries > 0); //Retry for 10 times
-
-		// Check for timeout errors after retrying
-		if (error == PGRERROR_TIMEOUT)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		// Get the camera information
-		//CameraInfo camInfo;
-		cout << "getting camera info" << endl;
-		error = cam.GetCameraInfo(&camInfo);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-			
-		//Set Cam_num variable according to serialNumber
-		if (camInfo.serialNumber == 15435734)
-		{cam_num = "left";}
-		else if (camInfo.serialNumber == 15435724) 
-		{cam_num = "right";}
-		
-		//
-		//Main Aim is to set the width and height
-		//To check whether the format 7 mode is supported 
-		//will give error if not	
-		// Query for available Format 7 modes
-		//
-		//Format7Info fmt7Info;
-		//bool supported;
-		fmt7Info.mode = k_fmt7Mode; // will return true if format7 is supported
-		error = cam.GetFormat7Info(&fmt7Info, &supported);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-	//	PrintFormat7Capabilities(fmt7Info); // Prints the format7 features
-
-		if ((k_fmt7PixFmt & fmt7Info.pixelFormatBitField) == 0)
-		{
-			// Pixel format not supported!
-			cout << "Pixel format is not supported" << endl;
-			return -1;
-		}
-
-		//Setting the format7 features
-		//Setting the max width and height
-		//Setting the pixel format
-		//Format7ImageSettings fmt7ImageSettings;
-		fmt7ImageSettings.mode = k_fmt7Mode;
-		fmt7ImageSettings.offsetX = 0;
-		fmt7ImageSettings.offsetY = 0;
-		fmt7ImageSettings.width = fmt7Info.maxWidth;
-		fmt7ImageSettings.height = fmt7Info.maxHeight;
-		fmt7ImageSettings.pixelFormat = k_fmt7PixFmt;
-
-		//bool valid;
-		//Format7PacketInfo fmt7PacketInfo;
-
-		//To chck whether the settings are accepted
-		// Validate the settings to make sure that they are valid
-		error = cam.ValidateFormat7Settings(
-			&fmt7ImageSettings,
-			&valid,
-			&fmt7PacketInfo);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		if (!valid)
-		{
-			// Settings are not valid
-			cout << "Format7 settings are not valid" << endl;
-			return -1;
-		}
-
-		// Set the settings to the camera
-		error = cam.SetFormat7Configuration(
-			&fmt7ImageSettings,
-			fmt7PacketInfo.recommendedBytesPerPacket);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	// Set the settings to the camera
+	error = cam.SetFormat7Configuration(
+		&fmt7ImageSettings,
+		fmt7PacketInfo.recommendedBytesPerPacket);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
 
-		// Check if the camera supports the FRAME_RATE property
+	// Check if the camera supports the FRAME_RATE property
 
-		//PropertyInfo propInfo;
-		propInfo.type = FRAME_RATE;
-		//Getting the Frame rate Property
-		error = cam.GetPropertyInfo(&propInfo);
+	//PropertyInfo propInfo;
+	propInfo.type = FRAME_RATE;
+	//Getting the Frame rate Property
+	error = cam.GetPropertyInfo(&propInfo);
 
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
-				//Setting AutoExposure Off
-		prop.type = AUTO_EXPOSURE;
-		prop.autoManualMode = false;
-		prop.onOff = false;
-		error = cam.SetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+			//Setting AutoExposure Off
+	prop.type = AUTO_EXPOSURE;
+	prop.autoManualMode = false;
+	prop.onOff = false;
+	error = cam.SetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
-		//Setting AutoWhiteBalance OFf
-		prop.type = WHITE_BALANCE;
-		prop.autoManualMode = false;
-		prop.onOff = false;
-		error = cam.SetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	//Setting AutoWhiteBalance OFf
+	prop.type = WHITE_BALANCE;
+	prop.autoManualMode = false;
+	prop.onOff = false;
+	error = cam.SetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
-		//Setting AutoGain OFf
-		prop.type = GAIN;
-		prop.autoManualMode = false;
-		error = cam.SetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	//Setting AutoGain OFf
+	prop.type = GAIN;
+	prop.autoManualMode = false;
+	prop.onOff = false;
+	prop.absValue = GAIN_VALUE;
+	error = cam.SetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
-		// shutter code 
-		Property prop;
-		prop.type = SHUTTER;
-		prop.onOff = true;
-		prop. autoManualMode = false;
-		prop.absControl = true; 
-		prop.absValue = 100; // changes in this value changes shutter speed. It is in milliseconds
-		error = cam.SetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	// shutter code 
+	Property prop;
+	prop.type = SHUTTER;
+	prop.onOff = false;
+	prop.autoManualMode = false;
+	prop.absControl = true; 
+	prop.absValue = SHUTTER_SPEED_VALUE; // changes in this value changes shutter speed. It is in milliseconds
+	error = cam.SetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 /*
 
-		if (ShutterInput == 1)
+	if (ShutterInput == 1)
+	{
+		//cout << " shutter input 1 detected" << endl;
+		//cin.ignore();
+		ExtendedShutterType shutterType = NO_EXTENDED_SHUTTER;
+	}
+
+	else if ((propInfo.present == true) && (ShutterInput != 1))
+	{	cout<<"entereing in shutter"<<endl;
+
+		//Setting FRAME_RATE Off
+		prop.type = FRAME_RATE;
+		error = cam.GetProperty(&prop);
+		if (error != PGRERROR_OK)
 		{
-			//cout << " shutter input 1 detected" << endl;
-			//cin.ignore();
-			ExtendedShutterType shutterType = NO_EXTENDED_SHUTTER;
+			PrintError(error);
+			return -1;
+		}
+		cin.ignore();
+		prop.autoManualMode = false;
+		prop.onOff = false;
+
+		error = cam.SetProperty(&prop);
+		if (error != PGRERROR_OK)
+		{
+			PrintError(error);
+			return -1;
 		}
 
-		else if ((propInfo.present == true) && (ShutterInput != 1))
-		{	cout<<"entereing in shutter"<<endl;
+		ExtendedShutterType shutterType = GENERAL_EXTENDED_SHUTTER;
 
-			//Setting FRAME_RATE Off
-			prop.type = FRAME_RATE;
-			error = cam.GetProperty(&prop);
-			if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				return -1;
-			}
-			cin.ignore();
-			prop.autoManualMode = false;
-			prop.onOff = false;
-
-			error = cam.SetProperty(&prop);
-			if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				return -1;
-			}
-
-			ExtendedShutterType shutterType = GENERAL_EXTENDED_SHUTTER;
-
-			// Set the shutter property of the camera
-			prop.type = SHUTTER;
-			error = cam.GetProperty(&prop);
-			if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				return -1;
-			}
-
-			prop.autoManualMode = false;
-			prop.absControl = true;
-			prop.absValue = ShutterInput;
-
-			error = cam.SetProperty(&prop);
-			if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				return -1;
-			}
-
-			cout << "Shutter time set to " << fixed << setprecision(2) << ShutterInput << "ms" << endl;
-
+		// Set the shutter property of the camera
+		prop.type = SHUTTER;
+		error = cam.GetProperty(&prop);
+		if (error != PGRERROR_OK)
+		{
+			PrintError(error);
+			return -1;
 		}
+
+		prop.autoManualMode = false;
+		prop.absControl = true;
+		prop.absValue = ShutterInput;
+
+		error = cam.SetProperty(&prop);
+		if (error != PGRERROR_OK)
+		{
+			PrintError(error);
+			return -1;
+		}
+
+		cout << "Shutter time set to " << fixed << setprecision(2) << ShutterInput << "ms" << endl;
+
+	}
 */
 
 #ifndef SOFTWARE_TRIGGER_CAMERA
-		// Check for external trigger support
-		//TriggerModeInfo triggerModeInfo;
-		error = cam.GetTriggerModeInfo(&triggerModeInfo);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	// Check for external trigger support
+	//TriggerModeInfo triggerModeInfo;
+	error = cam.GetTriggerModeInfo(&triggerModeInfo);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
-		if (triggerModeInfo.present != true)
-		{
-			cout << "Camera does not support external trigger! Exiting..." << endl;
-			return -1;
-		}
+	if (triggerModeInfo.present != true)
+	{
+		cout << "Camera does not support external trigger! Exiting..." << endl;
+		return -1;
+	}
 #endif
 
-		// Get current trigger settings
-		//TriggerMode triggerMode;
-		error = cam.GetTriggerMode(&triggerMode);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	// Get current trigger settings
+	//TriggerMode triggerMode;
+	error = cam.GetTriggerMode(&triggerMode);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
-		// Set camera to trigger mode 0
+	// Set camera to trigger mode 0
 
-		triggerMode.onOff = true;
-		triggerMode.mode = 0;
-		triggerMode.parameter = 0;
+	triggerMode.onOff = true;
+	triggerMode.mode = 0;
+	triggerMode.parameter = 0;
 
 #ifdef SOFTWARE_TRIGGER_CAMERA
-		// A source of 7 means software trigger
-		triggerMode.source = 7;
+	// A source of 7 means software trigger
+	triggerMode.source = 7;
 #else
-		// Triggering the camera externally using source 0.
-		triggerMode.source = 0;
+	// Triggering the camera externally using source 0.
+	triggerMode.source = 0;
 #endif
 
-		error = cam.SetTriggerMode(&triggerMode);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
+	error = cam.SetTriggerMode(&triggerMode);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 
-		//const unsigned int k_TriggerMode = 0x830;
-		//const unsigned int k_fireValu = 0x10;
-		//error = cam.WriteRegister(k_TriggerMode, k_fireValu);//Writing the register 62Ch with value 1 in all 32 bits
+	//const unsigned int k_TriggerMode = 0x830;
+	//const unsigned int k_fireValu = 0x10;
+	//error = cam.WriteRegister(k_TriggerMode, k_fireValu);//Writing the register 62Ch with value 1 in all 32 bits
 
-		//Checking for error
-
+	//Checking for error
+}
 
 
 		// Poll to ensure camera is ready
@@ -667,11 +678,13 @@ int Camera11::cam_init()
 			}
 
 			// Creating a Unique Filename
-			//ostringstream filename;
-			filename << t << "_" << cam_num << ".pgm";
+			string file_name_cur = filename;
+			file_name_cur.append("_");
+			file_name_cur.append(cam_num);
+			file_name_cur.append(".pgm");
 
 			//saving the image
-			error = convertedimage.Save(filename.str().c_str());
+			error = convertedimage.Save(file_name_cur.c_str());
 			if (error != PGRERROR_OK)
 			{
 				PrintError(error);
@@ -679,7 +692,7 @@ int Camera11::cam_init()
 			}
 
 			cout << "..." << endl;
-			filename.str("");
+			//filename.str("");
 // Turn trigger mode off.
 //int disconnect()
 //{

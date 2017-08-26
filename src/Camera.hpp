@@ -11,35 +11,39 @@
 using namespace FlyCapture2;
 using namespace std;
 
+#define INIT_MAXTRIES 5
+
+static const float SHUTTER_SPEED_VALUE = 40;
+static const float GAIN_VALUE = 0;
 
 class Camera11
 {
 public:
-	string cam_num;
-	string t;
+	int cam_connect();
+	int cam_init();
+	int cam_capture(string filename);
+	
+	string cam_sub;
+	PGRGuid guid;
+	
 	const Mode k_fmt7Mode = MODE_0;
 	const PixelFormat k_fmt7PixFmt = PIXEL_FORMAT_RAW8;
+	
+	
+	string t;
+	
+	
 	Camera cam;
 	//Number of images to take
 	const int k_numImages = 1;
 	Error error;
-	BusManager busMgr;
-	unsigned int numCameras;
-	PGRGuid guid;
-	const unsigned int k_cameraPower = 0x610;
-        const unsigned int k_powerVal = 0x80000000;
-	const unsigned int millisecondsToSleep = 100;
-        unsigned int regVal = 0;
-        unsigned int retries = 10;
-	CameraInfo camInfo;
-	Format7Info fmt7Info;
-        bool supported;
+
 	Format7ImageSettings fmt7ImageSettings;
-        bool valid;
-        Format7PacketInfo fmt7PacketInfo;
+    bool valid;
+    Format7PacketInfo fmt7PacketInfo;
 	PropertyInfo propInfo;
 	float ShutterInput = 1;
-        Property prop;
+    Property prop;
 	TriggerModeInfo triggerModeInfo;
 	TriggerMode triggerMode;
 	bool retVal;
@@ -56,6 +60,20 @@ bool CheckSoftwareTriggerPresence(Camera* pCam);
 bool PollForTriggerReady(Camera* pCam);
 bool FireSoftwareTrigger(Camera* pCam);
 void PrintFormat7Capabilities(Format7Info fmt7Info);
-int cam_init();
-string get_time();
+
+
+
+	string get_time();
+};
+
+class CameraPair
+{
+public:
+	int camPair_connect();
+	int camPair_init();
+	int camPair_capture(string filename);
+	
+private:
+	Camera11 cam1, cam2;
+	BusManager busMgr;
 };

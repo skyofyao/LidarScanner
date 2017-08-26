@@ -72,7 +72,7 @@ vector<Lidar::DataPointRaw> Lidar::scan_once(float line_size)
 		//return 1; TODO handle this properly
 	}
 	processScanRaw(data, intensity, timestamp, dataPoints, line_size);
-	
+	//std::cout<<"One scan, size"<<dataPoints.size()<<"/"<<data.size()<<endl;
 	return dataPoints;
 }
 
@@ -120,7 +120,7 @@ void Lidar::processScanRaw(vector<long>& data, vector<unsigned short>& intensity
 	// TODO get this to calculate things right
 	double timePerIndex = 1000.0 * abs(urg.index2deg(1) - urg.index2deg(0)) / SCANS_PER_SECOND / 360.0;
 	int n_valid = 0;
-	vector<DataPointRaw> data_current_scan;
+	vector<DataPointRaw> data_current_scan(idx_max - idx_min);
 	for (size_t i = idx_min; i < idx_max; ++i)
 	{
 		long l = data[i];
@@ -129,9 +129,11 @@ void Lidar::processScanRaw(vector<long>& data, vector<unsigned short>& intensity
 			DataPointRaw point = {l, urg.index2rad(i), intensity[i], timestamp + (long)(timePerIndex * i)};
 			data_current_scan[n_valid] = point;
 			n_valid++;
+			
 		}
 	}
 	data_current_scan.resize(n_valid);
+	//std::cout<<"In scan, valid:"<<n_valid<<endl;
 	// Append to the end of the output vector
 	dataPoints.insert(dataPoints.end(), data_current_scan.begin(), data_current_scan.end());
 }

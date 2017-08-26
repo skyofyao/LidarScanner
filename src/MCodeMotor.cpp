@@ -15,12 +15,12 @@ const unsigned int MCodeMotor::DEFAULT_INITIAL_VELOCITY = 0;				// initial veloc
 const unsigned int MCodeMotor::DEFAULT_MAXIMUM_VELOCITY = 1000;				//maximum velocity attained by the motor
 const unsigned int MCodeMotor::DEFAULT_RUN_CURRENT = 80;					// current at run time 
 const unsigned int MCodeMotor::DEFAULT_HOLD_CURRENT = 80;					// current at hold time
-const unsigned int MCodeMotor::BLOCKING_REFRESH_RATE_MILLISECONDS = 30;		// check for anything blocking the motor rate ///// Time in milliseconds to poll the motor when blocking execution until the motor stops.
+const unsigned int MCodeMotor::BLOCKING_REFRESH_RATE_MILLISECONDS = 50;		// check for anything blocking the motor rate ///// Time in milliseconds to poll the motor when blocking execution until the motor stops.
 const unsigned int MCodeMotor::BLOCKING_DEFAULT_TIMEOUT_MILLISECONDS = 10000;	// maximum time till which motor can sustain block ///// Maximum time to block execution when waiting for the motor to stop.
 const unsigned int MCodeMotor::HOME_RETRYS = 5;								// number of tries made by the motor to reach home location before giving up
 const unsigned int MCodeMotor::HOME_RETRY_DELAY_MILLISECONDS = 1000;		// time difference between 2 retries of motor to reach home location
 const unsigned int MCodeMotor::MOTOR_RESPONSE_TIMEOUT_MILLISECONDS = 500;	// maximum time waiting for the motor to respond to a given command
-const unsigned int MCodeMotor::MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS = 5;	// wait time for motor to respond to the given command
+const unsigned int MCodeMotor::MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS = 15;	// wait time for motor to respond to the given command
 const int MCodeMotor::DEFAULT_POSITION = -1322;								// displacement in terms of encoder counts the new home location with respect to the old one
 const unsigned int MCodeMotor::ENCODER_COUNTS_PER_ROTATION = 4000;			// total number of encoder counts present per location
 //const unsigned int MCodeMotor::MICRO_STEPS_PER_ROTATION = 51200;			// Total number of microsteps counts per revolutaion
@@ -41,6 +41,7 @@ bool MCodeMotor::connect()
 string& MCodeMotor::sendCommand(const string& command)
 {
 	socket.sendString(command + "\r\n");	// motor recognises the command only if it has \r\n at its end hence appended at last
+	this_thread::sleep_for(chrono::milliseconds(MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS));		// wait for next response
 	response = socket.receiveString();		// capture the response from motor
 
 	// Each response from the motor ends with a '?' or '>'.

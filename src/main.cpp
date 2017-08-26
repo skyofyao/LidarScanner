@@ -67,7 +67,7 @@ int main()
 	Lidar lidar(lidarIpAddress, lidarPort);					// initializing object of class Lidar
 	if (!lidar.connect())									// checking for lidar connection
 	{
-		std::cout<<"Lidar not connected""<<std::endl;
+		std::cout<<"Lidar not connected"<<std::endl;
 		return 1;
 	}
 
@@ -80,7 +80,7 @@ int main()
 
 	Scanner scanner(lidar, motor);							// initialize object of class Scanner
 
-	camera1.cam_init();										// take a picture using camera
+	//camera1.cam_init();										// take a picture using camera
 
 	// Data acqusition loop
 	while(1)
@@ -92,34 +92,62 @@ int main()
 		getline(cin,input_str);
 		stringstream str_stm = stringstream(input_str);
 		// Parameters
-		char scan_type; // 'O' for orginal, 'S' for step, 'C' for continuous, others for exit
+		char scan_type = 0; // 'O' for orginal, 'S' for step, 'C' for continuous, others for exit
 		string filename_pfx;	// Filename prefix for the photos and the pcd file
-		float scan_size;	// Motor movement size, in deg
-		float scan_center;	// The middle angle of motor movement, in deg
-		float lidar_scan_size; // The angle of lidar valid scan pixels, in deg
-		int	 scan_lines; // How many lines to be scanned in the motor movement
+		float scan_size = 0;	// Motor movement size, in deg
+		float scan_center = 0;	// The middle angle of motor movement, in deg
+		float lidar_scan_size = 0; // The angle of lidar valid scan pixels, in deg
+		int	 scan_lines = 0; // How many lines to be scanned in the motor movement
 		// Parse parameters
 		str_stm >> scan_type;
+		if(scan_type <31 || scan_type > 127 )
+		{
+			getline(cin,input_str);
+			str_stm = stringstream(input_str);
+			str_stm >> scan_type;
+		}
 		str_stm >> filename_pfx;
-		string filename = "../photos/";
+		
+		string filename = "/home/odroid/pheno3v2/photos/";
+		
+		vector<Scanner::DataRaw> rdata;
+		vector<Scanner::DataPoint> data;
+		
 		switch(scan_type)
 		{
 			case 'O':
 				std::cout<<"Origional scan"<<endl;
+				scanner.contScan();											// start scanning using the Lidar at specified angle and speed
+
+				motor.moveAngleAbsolute(0);								// after scanning bring back the motor to home location
+
+				data = scanner.getLidarData(); 	// get the data by scanning from the Lidar
 				
+				if(data.size() == 0)
+					std::cout<<"Error: no scanner data received"<<std::endl;
+
+				savePCD(data, filename);
+
+				cout << "done!" << endl;	
 			break;
 			case 'S':
-				std::cout<<"step scan"<<endl;
-				str_stm >> scan_size;
-				str_stm >> scan_lines;
-				str_stm >> lidar_scan_size;
-				str_stm >> scan_center;
+				std::cout<<"Step scan"<<endl;
+				str_stm >> scan_size>> scan_lines>> lidar_scan_size>> scan_center;
+				str_stm.ignore();
 				std::cout<<"Parameters: "<<scan_size<<", " <<scan_lines<<", "<<lidar_scan_size<<", "<<scan_center<<endl;
-				
+		
 				filename.append(filename_pfx);
+				
+				camera1.cam_init(filename_pfx);										// take a picture using camera
 				filename.append(".pcd");
 				std::cout<<"file path"<<filename<<std::endl;
-				continue;
+				
+				scanner.stepScan(scan_size, scan_lines, lidar_scan_size, scan_center);
+				rdata = scanner.getLidarRaw();
+				if(rdata.size() == 0)
+					std::cout<<"Error: no scanner data received"<<std::endl;
+				saveRaw(rdata, filename);
+				cout << "done!" << endl;
 			break;
 			default:
 				std::cout<<"Invalid scan_type: "<<scan_type<<endl;
@@ -127,21 +155,13 @@ int main()
 			break;
 		}
 		
+		
 		// Wait for user input to select captureing mode
-		scanner.contScan();											// start scanning using the Lidar at specified angle and speed
 
-		motor.moveAngleAbsolute(0);								// after scanning bring back the motor to home location
-
-		vector<Scanner::DataPoint> data = scanner.getLidarData(); 	// get the data by scanning from the Lidar
-		
-		if(data.size() == 0)
-			std::cout<<"Error: no scanner data received"<<std::endl;
-
-		string filename = "points.pcd";
-		savePCD(data, filename);
-
-		cout << "done!" << endl;	
-		
+		if (!motor.homeToIndex())								// check if motor is positioned at home location. Home is defined as the position parallel to the motor alignment
+		{
+			return 1;
+		}
 	}	
 
 	return 0;

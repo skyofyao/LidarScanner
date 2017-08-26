@@ -83,8 +83,8 @@ void Scanner::stepScan(float scan_size, int scan_lines, float line_size, float s
 	for(int i = 0; i < scan_lines; i++)
 	{
 		motor.moveAngleAbsolute(angle_start + angle_per_scan * i, 0);
-		vector<Lidar::DataPointRaw> rdata = lidar.scan_once();
-		motor.blockWhileMoving(150);
+		vector<Lidar::DataPointRaw> rdata = lidar.scan_once(line_size);
+		motor.blockWhileMoving(500);
 		// Append scanner data to the vector in class
 		vector<DataRaw> tempvec(rdata.size());
 		for(int it_vec = 0; it_vec < rdata.size(); it_vec++)
@@ -102,5 +102,10 @@ void Scanner::stepScan(float scan_size, int scan_lines, float line_size, float s
 vector<Scanner::DataPoint> Scanner::getLidarData()
 {
 	return lidarData;
+}
+
+vector<Scanner::DataRaw> Scanner::getLidarRaw()
+{
+	return lidarRawData;
 }
 

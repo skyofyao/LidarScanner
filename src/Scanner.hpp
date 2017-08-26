@@ -36,7 +36,7 @@ public:
 	//void contScan(float scan_size, int scan_lines, float line_size, float scan_center = SCAN_CENTER);
 	void stepScan(float scan_size, int scan_lines, float line_size, float scan_center = SCAN_CENTER);	// Scanning mode two, stepping motor
 	vector<DataPoint> getLidarData();
-
+	vector<Scanner::DataRaw> getLidarRaw();
 private:
 	static const int SCAN_CENTER;
 	static const int SCAN_SIZE;
