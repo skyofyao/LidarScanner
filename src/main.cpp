@@ -52,9 +52,10 @@ int main()
 
 	/// Init sensors and motors
 
-	Camera11 camera1;										// intializing object of class camera
+	CameraPair camera_pair;										// intializing object of class camera
 
-	//camera1.cam_init();
+	camera_pair.camPair_connect();
+	camera_pair.camPair_init();
 	
 	MCodeMotor motor(motorIpAddress, motorPort);			// initializing object of class MCodeMotor
 
@@ -138,7 +139,8 @@ int main()
 		
 				filename.append(filename_pfx);
 				
-				camera1.cam_init(filename_pfx);										// take a picture using camera
+				camera_pair.camPair_capture(filename);										// take a picture using cameras
+				
 				filename.append(".pcd");
 				std::cout<<"file path"<<filename<<std::endl;
 				

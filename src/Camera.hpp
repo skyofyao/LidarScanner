@@ -19,51 +19,31 @@ static const float GAIN_VALUE = 0;
 class Camera11
 {
 public:
+	Camera11(){}
+	~Camera11(){}
+
 	int cam_connect();
 	int cam_init();
-	int cam_capture(string filename);
+	int cam_grab_save(string filename_prefix);
+	int cam_trigger();
+	int cam_disconnect();
 	
-	string cam_sub;
 	PGRGuid guid;
-	
-	const Mode k_fmt7Mode = MODE_0;
-	const PixelFormat k_fmt7PixFmt = PIXEL_FORMAT_RAW8;
-	
-	
-	string t;
-	
+	Image image;
 	
 	Camera cam;
-	//Number of images to take
-	const int k_numImages = 1;
-	Error error;
-
-	Format7ImageSettings fmt7ImageSettings;
-    bool valid;
-    Format7PacketInfo fmt7PacketInfo;
-	PropertyInfo propInfo;
-	float ShutterInput = 1;
-    Property prop;
-	TriggerModeInfo triggerModeInfo;
-	TriggerMode triggerMode;
-	bool retVal;
-	FC2Config config;
-	Image image;
-	bool retVal1;
-	Image convertedimage;
+	string cam_num;
+private:
+	const Mode k_fmt7Mode = MODE_0;
+	const PixelFormat k_fmt7PixFmt = PIXEL_FORMAT_RAW8;
 
 
-void PrintBuildInfo();
-void PrintCameraInfo(CameraInfo* pCamInfo);
-void PrintError(Error error);
-bool CheckSoftwareTriggerPresence(Camera* pCam);
-bool PollForTriggerReady(Camera* pCam);
-bool FireSoftwareTrigger(Camera* pCam);
-void PrintFormat7Capabilities(Format7Info fmt7Info);
+	void PrintBuildInfo();
+	void PrintCameraInfo(CameraInfo* pCamInfo);
+	
 
+	void PrintFormat7Capabilities(Format7Info fmt7Info);
 
-
-	string get_time();
 };
 
 class CameraPair
@@ -71,9 +51,15 @@ class CameraPair
 public:
 	int camPair_connect();
 	int camPair_init();
-	int camPair_capture(string filename);
+	int camPair_capture(string filename_prefix);
 	
 private:
+	const int INIT_MAX_TRIES = 5;
 	Camera11 cam1, cam2;
 	BusManager busMgr;
 };
+
+void PrintError(Error error);
+bool CheckSoftwareTriggerPresence(Camera* pCam);
+bool PollForTriggerReady(Camera* pCam);
+bool FireSoftwareTrigger(Camera* pCam);

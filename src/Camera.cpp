@@ -31,17 +31,6 @@ enum ExtendedShutterType
 //No significant Imporatnce to this code
 //
 
-string Camera11::get_time()
-{
-time_t tt;
-time(&tt);
-stringstream ss;
-ss << tt;
-string ts = ss.str();
-cout << ts << "is the time" << endl;
-return ts;
-}
-
 void Camera11::PrintBuildInfo()
 {
 	FC2Version fc2version;  //Version of the SDK
@@ -61,7 +50,7 @@ void Camera11::PrintBuildInfo()
 //Can be removed after integrating the system
 //
 
-void Camera11::PrintCameraInfo(CameraInfo* pCamInfo)
+void PrintCameraInfo(CameraInfo* pCamInfo)
 {
 	cout << endl;
 	cout << "**** CAMERA INFORMATION****" << endl;
@@ -73,10 +62,6 @@ void Camera11::PrintCameraInfo(CameraInfo* pCamInfo)
 	cout << endl;
 }
 
-void Camera11::PrintError(Error error)
-{
-	error.PrintErrorTrace();
-}
 
 //
 //Start of Important program
@@ -84,7 +69,7 @@ void Camera11::PrintError(Error error)
 //Need to use Software Trigger mode to get input from the main computer through software
 //
 
-bool Camera11::CheckSoftwareTriggerPresence(Camera* pCam) //Camera Calss should be used to manipulate any registers in the system
+bool CheckSoftwareTriggerPresence(Camera* pCam) //Camera Calss should be used to manipulate any registers in the system
 {
 	//530h corrsponds to the Trigger Inquiry Resgister
 	//It gives the value of the presence of a certain feature
@@ -125,7 +110,7 @@ bool Camera11::CheckSoftwareTriggerPresence(Camera* pCam) //Camera Calss should 
 //If the bit read is 0 it is ready
 //If bit read is 1 it is busy
 //
-bool Camera11::PollForTriggerReady(Camera* pCam)
+bool PollForTriggerReady(Camera* pCam)
 {
 	const unsigned int k_softwareTrigger = 0x62C; //Register to check the Software Trigger is ready to be used
 	Error error;
@@ -154,7 +139,7 @@ bool Camera11::PollForTriggerReady(Camera* pCam)
 //To fire we will write 1 to the 62Ch Register
 //
 
-bool Camera11::FireSoftwareTrigger(Camera* pCam)
+bool FireSoftwareTrigger(Camera* pCam)
 {
 	const unsigned int k_softwareTrigger = 0x62C;
 	const unsigned int k_fireVal = 0x80000000;
@@ -183,73 +168,6 @@ void Camera11::PrintFormat7Capabilities(Format7Info fmt7Info)
 	cout << "Offset Unit size: (" << fmt7Info.offsetHStepSize << ", " << fmt7Info.offsetVStepSize << ")" << endl;
 	cout << "Pixel format bitfield: 0x" << fmt7Info.pixelFormatBitField << endl;
 
-}
-//
-//Main Program
-//
-
-//int main(int /*argc*/, char** /*argv*/)
-//int cam_init()
-//{
-	
-	
-int CameraPair::camPair_connect()
-{
-	Error error1, error2, errorG;
-	//To print the Build Info
-	//PrintBuildInfo();
-	
-	//
-	// Class BusManager used to find the number of cameras in the Bus
-	//
-	int numCameras;
-	int init_tries = 0;
-	while(init_tries < INIT_MAX_TRIES)
-	{
-		//Getting the number of cameras in the bus
-		errorG = busMgr.GetNumOfCameras(&numCameras);
-
-		//Checking for Error
-		if (errorG != PGRERROR_OK)
-		{
-			PrintError(errorG);
-			return -1;
-		}
-
-		cout << "Number of cameras detected: " << numCameras << endl;
-		
-		//To check if atleast one camera is attached
-		if (numCameras < 2)
-		{
-			cout << "Insufficient number of cameras... exiting" << endl;
-			return -1;
-		}
-		
-		//
-		//Gets the serial number of the camera connected by the index
-		//
-		error1 = busMgr.GetCameraFromIndex(0, &cam1.guid);
-		error2 = busMgr.GetCameraFromIndex(1, &cam2.guid);
-
-		//Checking for error
-		if (error1 != PGRERROR_OK || error2 != PGRERROR_OK)
-		{
-			PrintError(error1);
-			PrintError(error2);
-			return -1;
-		}
-
-		// Connect to a camera with the serial number fetched
-		error1 = cam1.connect();
-		error2 = cam2.connect();
-		
-		if (error1 != PGRERROR_OK || error2 != PGRERROR_OK)
-		{
-			PrintError(error1);
-			PrintError(error2);
-			return -1;
-		}
-	}
 }
 
 int Camera11::cam_connect()
@@ -323,7 +241,7 @@ int Camera11::cam_connect()
 	}
 
 	// Get the camera information
-	cout << "getting camera info" << endl;
+	//cout << "getting camera info" << endl;
 	CameraInfo camInfo;
 	error = cam.GetCameraInfo(&camInfo);
 	if (error != PGRERROR_OK)
@@ -337,6 +255,7 @@ int Camera11::cam_connect()
 	{cam_num = "l";}
 	else if (camInfo.serialNumber == 15435724) 
 	{cam_num = "r";}
+	return 0;
 }
 			
 int Camera11::cam_init()
@@ -350,7 +269,7 @@ int Camera11::cam_init()
 	Format7Info fmt7Info;
 	bool supported;
 	fmt7Info.mode = k_fmt7Mode; // will return true if format7 is supported
-	error = cam.GetFormat7Info(&fmt7Info, &supported);
+	Error error = cam.GetFormat7Info(&fmt7Info, &supported);
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
@@ -369,7 +288,7 @@ int Camera11::cam_init()
 	//Setting the format7 features
 	//Setting the max width and height
 	//Setting the pixel format
-	//Format7ImageSettings fmt7ImageSettings;
+	Format7ImageSettings fmt7ImageSettings;
 	fmt7ImageSettings.mode = k_fmt7Mode;
 	fmt7ImageSettings.offsetX = 0;
 	fmt7ImageSettings.offsetY = 0;
@@ -377,8 +296,8 @@ int Camera11::cam_init()
 	fmt7ImageSettings.height = fmt7Info.maxHeight;
 	fmt7ImageSettings.pixelFormat = k_fmt7PixFmt;
 
-	//bool valid;
-	//Format7PacketInfo fmt7PacketInfo;
+	bool valid;
+	Format7PacketInfo fmt7PacketInfo;
 
 	//To chck whether the settings are accepted
 	// Validate the settings to make sure that they are valid
@@ -412,7 +331,7 @@ int Camera11::cam_init()
 
 	// Check if the camera supports the FRAME_RATE property
 
-	//PropertyInfo propInfo;
+	PropertyInfo propInfo;
 	propInfo.type = FRAME_RATE;
 	//Getting the Frame rate Property
 	error = cam.GetPropertyInfo(&propInfo);
@@ -422,8 +341,8 @@ int Camera11::cam_init()
 		PrintError(error);
 		return -1;
 	}
-
-			//Setting AutoExposure Off
+	//Setting AutoExposure Off
+	Property prop;
 	prop.type = AUTO_EXPOSURE;
 	prop.autoManualMode = false;
 	prop.onOff = false;
@@ -433,8 +352,7 @@ int Camera11::cam_init()
 		PrintError(error);
 		return -1;
 	}
-
-	//Setting AutoWhiteBalance OFf
+ 	//Setting AutoWhiteBalance OFf
 	prop.type = WHITE_BALANCE;
 	prop.autoManualMode = false;
 	prop.onOff = false;
@@ -458,7 +376,6 @@ int Camera11::cam_init()
 	}
 
 	// shutter code 
-	Property prop;
 	prop.type = SHUTTER;
 	prop.onOff = false;
 	prop.autoManualMode = false;
@@ -470,7 +387,8 @@ int Camera11::cam_init()
 		PrintError(error);
 		return -1;
 	}
-/*
+
+	/*
 
 	if (ShutterInput == 1)
 	{
@@ -530,7 +448,7 @@ int Camera11::cam_init()
 
 #ifndef SOFTWARE_TRIGGER_CAMERA
 	// Check for external trigger support
-	//TriggerModeInfo triggerModeInfo;
+	TriggerModeInfo triggerModeInfo;
 	error = cam.GetTriggerModeInfo(&triggerModeInfo);
 	if (error != PGRERROR_OK)
 	{
@@ -543,10 +461,11 @@ int Camera11::cam_init()
 		cout << "Camera does not support external trigger! Exiting..." << endl;
 		return -1;
 	}
-#endif
+
+	#endif
 
 	// Get current trigger settings
-	//TriggerMode triggerMode;
+	TriggerMode triggerMode;
 	error = cam.GetTriggerMode(&triggerMode);
 	if (error != PGRERROR_OK)
 	{
@@ -580,159 +499,252 @@ int Camera11::cam_init()
 	//error = cam.WriteRegister(k_TriggerMode, k_fireValu);//Writing the register 62Ch with value 1 in all 32 bits
 
 	//Checking for error
+
+	// Poll to ensure camera is ready
+	bool retVal = PollForTriggerReady(&cam);
+	//retVal = PollForTriggerReady(&cam);
+	if (!retVal)
+	{
+		cout << endl;
+		cout << "Error polling for trigger ready!" << endl;
+		return -1;
+	}
+	
+	cout << "camera ready" << endl;
+	// Get the camera configuration
+	FC2Config config;
+	error = cam.GetConfiguration(&config);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	// Set the grab timeout to 5 seconds
+	config.grabTimeout = 5000;
+
+	// Set the camera configuration
+	error = cam.SetConfiguration(&config);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	cout <<"init complete "<<cam_num<<std::endl;
+	return 0;
 }
 
-
-		// Poll to ensure camera is ready
-		//bool retVal = PollForTriggerReady(&cam);
-		retVal = PollForTriggerReady(&cam);
-		if (!retVal)
-		{
-			cout << endl;
-			cout << "Error polling for trigger ready!" << endl;
-			return -1;
-		}
-		
-		cout << "camera ready" << endl;
-		// Get the camera configuration
-		//FC2Config config;
-		error = cam.GetConfiguration(&config);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		// Set the grab timeout to 5 seconds
-		config.grabTimeout = 5000;
-
-		// Set the camera configuration
-		error = cam.SetConfiguration(&config);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		// Camera is ready, start capturing images
-		error = cam.StartCapture();
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-#ifdef SOFTWARE_TRIGGER_CAMERA
-		if (!CheckSoftwareTriggerPresence(&cam))
-		{
-			cout << "SOFT_ASYNC_TRIGGER not implemented on this camera!  Stopping application" << endl;
-			return -1;
-		}
-#else
-		cout << "Trigger the camera by sending a trigger pulse to GPIO" << triggerMode.source << endl;
-#endif
-		//Image image;
-		//for (int imageCount = 0; imageCount < k_numImages; imageCount++)
-		//{
-
-#ifdef SOFTWARE_TRIGGER_CAMERA
-			// Check that the trigger is ready
-			PollForTriggerReady(&cam);
-			//cout << "Press the Enter key to initiate a software trigger" <bbbbbbbbbb< endl;
-			//cin.ignore();
-			// Fire software trigger
-			//bool retVal1 = FireSoftwareTrigger(&cam);
-			retVal1 = FireSoftwareTrigger(&cam);
-			if (!retVal1)
-			{
-				cout << endl;
-				cout << "Error firing software trigger" << endl;
-				return -1;
-			}
-#endif
-		
-//}
-
-//int grab()
-//{
-			// Grab image
-			t = get_time();
-			error = cam.RetrieveBuffer(&image);
-			if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				continue;
-			}
-
-			cout << "Grabbed Image for " << camInfo.serialNumber << endl;
-
-			//Create a converted Image
-			//Image convertedimage;
-
-			//Converting the raw image to pgm
-			error = image.Convert(PIXEL_FORMAT_RAW8, &convertedimage);
-			if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				return -1;
-			}
-
-			// Creating a Unique Filename
-			string file_name_cur = filename;
-			file_name_cur.append("_");
-			file_name_cur.append(cam_num);
-			file_name_cur.append(".pgm");
-
-			//saving the image
-			error = convertedimage.Save(file_name_cur.c_str());
-			if (error != PGRERROR_OK)
-			{
-				PrintError(error);
-				return -1;
-			}
-
-			cout << "..." << endl;
-			//filename.str("");
-// Turn trigger mode off.
-//int disconnect()
-//{
-		triggerMode.onOff = false;
-		error = cam.SetTriggerMode(&triggerMode);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-		cout << endl;
-		cout << "Finished grabbing images" << endl;
-
-		// Stop capturing images
-		error = cam.StopCapture();
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		// Turn off trigger mode
-		//triggerMode.onOff = false;
-		//error = cam.SetTriggerMode(&triggerMode);
-
-
-		// Disconnect the camera
-		error = cam.Disconnect();
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-	}				// FOR LOOP END
-
-	//cout << "Done! Press Enter to exit..." << endl;
+int Camera11::cam_trigger()
+{
+	#ifdef SOFTWARE_TRIGGER_CAMERA
+	// Check that the trigger is ready
+	bool retVal = PollForTriggerReady(&cam);
+	//cout << "Press the Enter key to initiate a software trigger" <bbbbbbbbbb< endl;
 	//cin.ignore();
+	// Fire software trigger
+	bool retVal1 = FireSoftwareTrigger(&cam);
 
-}						// INIT FUNCTION END
+	if (!retVal1)
+	{
+		cout << endl;
+		cout << "Error firing software trigger" << endl;
+		return -1;
+	}
+	else
+		return 0;
+#endif
+}
+int Camera11::cam_grab_save(string filename_prefix)
+{
+	//t = get_time();
+	Error error = cam.RetrieveBuffer(&image);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	//cout << "Grabbed Image for " << camInfo.serialNumber << endl;
+
+	//Create a converted Image
+	Image convertedimage;
+
+	//Converting the raw image to pgm
+	error = image.Convert(PIXEL_FORMAT_RAW8, &convertedimage);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	// Creating a Unique Filename
+	string file_name_cur = filename_prefix;
+	file_name_cur.append("_");
+	file_name_cur.append(cam_num);
+	file_name_cur.append(".pgm");
+
+	//saving the image
+	error = convertedimage.Save(file_name_cur.c_str());
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+}
+
+// Turn trigger mode off.
+int Camera11::cam_disconnect()
+{
+	TriggerMode triggerMode;
+	triggerMode.onOff = false;
+	Error error = cam.SetTriggerMode(&triggerMode);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+	cout << endl;
+	cout << "Finished grabbing images" << endl;
+
+	// Stop capturing images
+	error = cam.StopCapture();
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	// Disconnect the camera
+	error = cam.Disconnect();
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+}						
 
 
 
+int CameraPair::camPair_connect()
+{
+	Error error1, error2, errorG;
+	//To print the Build Info
+	//PrintBuildInfo();
+	
+	//
+	// Class BusManager used to find the number of cameras in the Bus
+	//
+	unsigned int numCameras;
+	int init_tries = 0;
+	while(init_tries < INIT_MAX_TRIES)
+	{
+		init_tries ++;
+		//Getting the number of cameras in the bus
+		errorG = busMgr.GetNumOfCameras(&numCameras);
+
+		//Checking for Error
+		if (errorG != PGRERROR_OK)
+		{
+			PrintError(errorG);
+			return -1;
+		}
+
+		cout << "Number of cameras detected: " << numCameras << endl;
+		
+		//To check if atleast one camera is attached
+		if (numCameras < 2)
+		{
+			cout << "Insufficient number of cameras... exiting, tries: "<< init_tries << endl;
+			continue;
+		}
+		
+		//
+		//Gets the serial number of the camera connected by the index
+		//
+		error1 = busMgr.GetCameraFromIndex(0, &cam1.guid);
+		error2 = busMgr.GetCameraFromIndex(1, &cam2.guid);
+
+		//Checking for error
+		if (error1 != PGRERROR_OK || error2 != PGRERROR_OK)
+		{
+			PrintError(error1);
+			PrintError(error2);
+			return -1;
+		}
+
+		// Connect to a camera with the serial number fetched
+		int stat1 = cam1.cam_connect();
+		int stat2 = cam2.cam_connect();
+	
+		if (stat1 <0 || stat2 <0)
+		{
+			std::cout<<"Connect camera error: L "<<stat1<<" R "<<stat2<<std::endl;
+			return -1;
+		}
+		else
+			return 0;
+	}
+	return -1;
+}
+
+int CameraPair::camPair_init()
+{
+	int stat1 = cam1.cam_init();
+	int stat2 = cam2.cam_init();
+	if (stat1 <0 || stat2 <0)
+	{
+		std::cout<<"Cam pair init error: L "<<stat1<<" R "<<stat2<<std::endl;
+		return -1;
+	}
+	
+	const Camera* p_cam[2] = {&cam1.cam, &cam2.cam};
+	cout << "Cameras start sync" << endl;
+	// Camera is ready, start capturing images
+	Error error = Camera::StartSyncCapture(2, p_cam);
+	
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+	cout << "Cameras capture started" << endl;
+#ifdef SOFTWARE_TRIGGER_CAMERA
+	if (!CheckSoftwareTriggerPresence(&cam1.cam) && !CheckSoftwareTriggerPresence(&cam2.cam))
+	{
+		cout << "SOFT_ASYNC_TRIGGER not implemented on this camera!  Stopping application" << endl;
+		return -1;
+	}
+#else
+	cout << "Trigger the camera by sending a trigger pulse to GPIO" << triggerMode.source << endl;
+#endif
+	
+	return 0;
+}
+
+int CameraPair::camPair_capture(string filename_prefix)
+{
+	int stat1 = cam1.cam_trigger();
+	int stat2 = cam2.cam_trigger();
+	
+	if (stat1 <0 || stat2 <0)
+	{
+		std::cout<<"Cam pair capture error: L "<<stat1<<" R "<<stat2<<std::endl;
+		return -1;
+	}
+	
+	stat1 = cam1.cam_grab_save(filename_prefix);
+	stat2 = cam2.cam_grab_save(filename_prefix);
+	
+	if (stat1 <0 || stat2 <0)
+	{
+		std::cout<<"Cam pair capture error: L "<<stat1<<" R "<<stat2<<std::endl;
+		return -1;
+	}
+	return 0;
+}
+
+void PrintError(Error error)
+{
+	error.PrintErrorTrace();
+}
