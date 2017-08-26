@@ -57,6 +57,7 @@ int main()
 	camera_pair.camPair_connect();
 	camera_pair.camPair_init();
 	
+	
 	MCodeMotor motor(motorIpAddress, motorPort);			// initializing object of class MCodeMotor
 
 	if (!motor.connect())									// checking for motor connection
@@ -150,6 +151,7 @@ int main()
 					std::cout<<"Error: no scanner data received"<<std::endl;
 				saveRaw(rdata, filename);
 				cout << "done!" << endl;
+				motor.moveAngleAbsolute(0);
 			break;
 			default:
 				std::cout<<"Invalid scan_type: "<<scan_type<<endl;
@@ -157,13 +159,8 @@ int main()
 			break;
 		}
 		
-		
-		// Wait for user input to select captureing mode
+		camera_pair.camPair_disconnect();
 
-		if (!motor.homeToIndex())								// check if motor is positioned at home location. Home is defined as the position parallel to the motor alignment
-		{
-			return 1;
-		}
 	}	
 
 	return 0;

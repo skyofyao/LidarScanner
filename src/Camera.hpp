@@ -52,10 +52,12 @@ public:
 	int camPair_connect();
 	int camPair_init();
 	int camPair_capture(string filename_prefix);
+	int camPair_disconnect();
 	
 private:
 	const int INIT_MAX_TRIES = 5;
-	Camera11 cam1, cam2;
+	Camera11* 	pcam1;
+	Camera11*	pcam2;
 	BusManager busMgr;
 };
 

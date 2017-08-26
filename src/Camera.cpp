@@ -276,7 +276,7 @@ int Camera11::cam_init()
 		return -1;
 	}
 
-//	PrintFormat7Capabilities(fmt7Info); // Prints the format7 features
+	//PrintFormat7Capabilities(fmt7Info); // Prints the format7 features
 
 	if ((k_fmt7PixFmt & fmt7Info.pixelFormatBitField) == 0)
 	{
@@ -321,7 +321,8 @@ int Camera11::cam_init()
 	// Set the settings to the camera
 	error = cam.SetFormat7Configuration(
 		&fmt7ImageSettings,
-		fmt7PacketInfo.recommendedBytesPerPacket);
+		fmt7PacketInfo.recommendedBytesPerPacket/2);
+		cout<<"Packet size:"<<fmt7PacketInfo.recommendedBytesPerPacket<<endl;
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
@@ -330,7 +331,6 @@ int Camera11::cam_init()
 
 
 	// Check if the camera supports the FRAME_RATE property
-
 	PropertyInfo propInfo;
 	propInfo.type = FRAME_RATE;
 	//Getting the Frame rate Property
@@ -531,6 +531,10 @@ int Camera11::cam_init()
 		return -1;
 	}
 
+	// Set the camera to use buffer
+	cam.WriteRegister(0x12E8, 0x80000F00);// Clear buffer
+	cam.WriteRegister(0x12E8, 0x82000F00);// Enable buffer
+	
 	cout <<"init complete "<<cam_num<<std::endl;
 	return 0;
 }
@@ -557,6 +561,7 @@ int Camera11::cam_trigger()
 }
 int Camera11::cam_grab_save(string filename_prefix)
 {
+	cam.WriteRegister(0x12E8, 0x82000F01);
 	//t = get_time();
 	Error error = cam.RetrieveBuffer(&image);
 	if (error != PGRERROR_OK)
@@ -628,6 +633,8 @@ int Camera11::cam_disconnect()
 
 int CameraPair::camPair_connect()
 {
+	pcam1 = new Camera11();
+	pcam2 = new Camera11();
 	Error error1, error2, errorG;
 	//To print the Build Info
 	//PrintBuildInfo();
@@ -662,8 +669,8 @@ int CameraPair::camPair_connect()
 		//
 		//Gets the serial number of the camera connected by the index
 		//
-		error1 = busMgr.GetCameraFromIndex(0, &cam1.guid);
-		error2 = busMgr.GetCameraFromIndex(1, &cam2.guid);
+		error1 = busMgr.GetCameraFromIndex(0, &pcam1->guid);
+		error2 = busMgr.GetCameraFromIndex(1, &pcam2->guid);
 
 		//Checking for error
 		if (error1 != PGRERROR_OK || error2 != PGRERROR_OK)
@@ -674,8 +681,8 @@ int CameraPair::camPair_connect()
 		}
 
 		// Connect to a camera with the serial number fetched
-		int stat1 = cam1.cam_connect();
-		int stat2 = cam2.cam_connect();
+		int stat1 = pcam1->cam_connect();
+		int stat2 = pcam2->cam_connect();
 	
 		if (stat1 <0 || stat2 <0)
 		{
@@ -690,27 +697,37 @@ int CameraPair::camPair_connect()
 
 int CameraPair::camPair_init()
 {
-	int stat1 = cam1.cam_init();
-	int stat2 = cam2.cam_init();
+	int stat1 = pcam1->cam_init();
+	int stat2 = pcam2->cam_init();
 	if (stat1 <0 || stat2 <0)
 	{
 		std::cout<<"Cam pair init error: L "<<stat1<<" R "<<stat2<<std::endl;
 		return -1;
 	}
-	
-	const Camera* p_cam[2] = {&cam1.cam, &cam2.cam};
-	cout << "Cameras start sync" << endl;
+	pcam1->cam.StopCapture();
+	pcam2->cam.StopCapture();
+	const Camera* p_cam[2] = {&pcam1->cam, &pcam2->cam};
 	// Camera is ready, start capturing images
-	Error error = Camera::StartSyncCapture(2, p_cam);
-	
+	cout << "Cameras capture start l" <<endl;
+	//Error error = Camera::StartSyncCapture(2, p_cam);
+	Error error = pcam1->cam.StartCapture();
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
 		return -1;
 	}
+	//pcam1->cam.StopCapture();
+	cout << "Cameras capture start r" <<endl;
+	error = pcam2->cam.StartCapture();
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+	//pcam2->cam.StopCapture();
 	cout << "Cameras capture started" << endl;
 #ifdef SOFTWARE_TRIGGER_CAMERA
-	if (!CheckSoftwareTriggerPresence(&cam1.cam) && !CheckSoftwareTriggerPresence(&cam2.cam))
+	if (!CheckSoftwareTriggerPresence(&pcam1->cam) && !CheckSoftwareTriggerPresence(&pcam2->cam))
 	{
 		cout << "SOFT_ASYNC_TRIGGER not implemented on this camera!  Stopping application" << endl;
 		return -1;
@@ -724,8 +741,8 @@ int CameraPair::camPair_init()
 
 int CameraPair::camPair_capture(string filename_prefix)
 {
-	int stat1 = cam1.cam_trigger();
-	int stat2 = cam2.cam_trigger();
+	int stat1 = pcam1->cam_trigger();
+	int stat2 = pcam2->cam_trigger();
 	
 	if (stat1 <0 || stat2 <0)
 	{
@@ -733,14 +750,21 @@ int CameraPair::camPair_capture(string filename_prefix)
 		return -1;
 	}
 	
-	stat1 = cam1.cam_grab_save(filename_prefix);
-	stat2 = cam2.cam_grab_save(filename_prefix);
+	stat1 = pcam1->cam_grab_save(filename_prefix);
+	stat2 = pcam2->cam_grab_save(filename_prefix);
 	
 	if (stat1 <0 || stat2 <0)
 	{
 		std::cout<<"Cam pair capture error: L "<<stat1<<" R "<<stat2<<std::endl;
 		return -1;
 	}
+	return 0;
+}
+
+int CameraPair::camPair_disconnect()
+{
+	pcam1->cam_disconnect();
+	pcam2->cam_disconnect();
 	return 0;
 }
 

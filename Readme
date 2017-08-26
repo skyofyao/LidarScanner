@@ -19,5 +19,7 @@ The network configuration for the motor and lidar is defined in src/main.cpp.
 The program can be compiled by running `make`.
 
 ## Running the program
-After the program is compiled, `./pheno3` will run the program.
+After the program is compiled, `./bin/pheno3v2` will run the program.
 
+## Note:
+1. If having trouble running "StartCapture()" for multiple cameras, run "sudo modprobe usbcore usbfs_memory_mb=1000", then reboot.
