@@ -2,3 +2,4 @@ bin/
 build/
 pheno3
 
+./*.pgm
