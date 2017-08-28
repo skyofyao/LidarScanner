@@ -541,7 +541,9 @@ int Camera11::cam_init()
 
 int Camera11::cam_trigger()
 {
-	#ifdef SOFTWARE_TRIGGER_CAMERA
+	cout<<"Trigger "<<cam_num<<endl;
+	//Error error = cam.StartCapture();
+#ifdef SOFTWARE_TRIGGER_CAMERA
 	// Check that the trigger is ready
 	bool retVal = PollForTriggerReady(&cam);
 	//cout << "Press the Enter key to initiate a software trigger" <bbbbbbbbbb< endl;
@@ -549,6 +551,8 @@ int Camera11::cam_trigger()
 	// Fire software trigger
 	bool retVal1 = FireSoftwareTrigger(&cam);
 
+	//cam.StopCapture();
+	//cout<<"trigger done"<<endl;
 	if (!retVal1)
 	{
 		cout << endl;
@@ -706,41 +710,42 @@ int CameraPair::camPair_init()
 	}
 	pcam1->cam.StopCapture();
 	pcam2->cam.StopCapture();
-	const Camera* p_cam[2] = {&pcam1->cam, &pcam2->cam};
+	//const Camera* p_cam[2] = {&pcam1->cam, &pcam2->cam};
 	// Camera is ready, start capturing images
 	cout << "Cameras capture start l" <<endl;
 	//Error error = Camera::StartSyncCapture(2, p_cam);
-	Error error = pcam1->cam.StartCapture();
-	if (error != PGRERROR_OK)
-	{
-		PrintError(error);
-		return -1;
-	}
-	//pcam1->cam.StopCapture();
-	cout << "Cameras capture start r" <<endl;
-	error = pcam2->cam.StartCapture();
-	if (error != PGRERROR_OK)
-	{
-		PrintError(error);
-		return -1;
-	}
-	//pcam2->cam.StopCapture();
-	cout << "Cameras capture started" << endl;
-#ifdef SOFTWARE_TRIGGER_CAMERA
-	if (!CheckSoftwareTriggerPresence(&pcam1->cam) && !CheckSoftwareTriggerPresence(&pcam2->cam))
-	{
-		cout << "SOFT_ASYNC_TRIGGER not implemented on this camera!  Stopping application" << endl;
-		return -1;
-	}
-#else
-	cout << "Trigger the camera by sending a trigger pulse to GPIO" << triggerMode.source << endl;
-#endif
+	// Error error = pcam1->cam.StartCapture();
+	// if (error != PGRERROR_OK)
+	// {
+		// PrintError(error);
+		// return -1;
+	// }
+	// //pcam1->cam.StopCapture();
+	// cout << "Cameras capture start r" <<endl;
+	// error = pcam2->cam.StartCapture();
+	// if (error != PGRERROR_OK)
+	// {
+		// PrintError(error);
+		// return -1;
+	// }
+	// //pcam2->cam.StopCapture();
+	// cout << "Cameras capture started" << endl;
+// #ifdef SOFTWARE_TRIGGER_CAMERA
+	// if (!CheckSoftwareTriggerPresence(&pcam1->cam) && !CheckSoftwareTriggerPresence(&pcam2->cam))
+	// {
+		// cout << "SOFT_ASYNC_TRIGGER not implemented on this camera!  Stopping application" << endl;
+		// return -1;
+	// }
+// #else
+	// cout << "Trigger the camera by sending a trigger pulse to GPIO" << triggerMode.source << endl;
+// #endif
 	
 	return 0;
 }
 
 int CameraPair::camPair_capture(string filename_prefix)
 {
+	
 	int stat1 = pcam1->cam_trigger();
 	int stat2 = pcam2->cam_trigger();
 	

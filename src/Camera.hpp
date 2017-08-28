@@ -54,7 +54,7 @@ public:
 	int camPair_capture(string filename_prefix);
 	int camPair_disconnect();
 	
-private:
+//private:
 	const int INIT_MAX_TRIES = 5;
 	Camera11* 	pcam1;
 	Camera11*	pcam2;

@@ -23,3 +23,4 @@ After the program is compiled, `./bin/pheno3v2` will run the program.
 
 ## Note:
 1. If having trouble running "StartCapture()" for multiple cameras, run "sudo modprobe usbcore usbfs_memory_mb=1000", then reboot.
+// editing /media/boot/boot.ini and adding usbcore.usbfs_memory_mb=1000 to bootargs toward the end.

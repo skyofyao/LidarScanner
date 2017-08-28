@@ -57,6 +57,19 @@ int main()
 	camera_pair.camPair_connect();
 	camera_pair.camPair_init();
 	
+	cout<<"cam 1 start"<<endl;
+	camera_pair.pcam1->cam.StartCapture();
+	camera_pair.pcam1->cam_trigger();
+	camera_pair.pcam1->cam_grab_save("/home/ordoid/pheno3v2/t1");
+	camera_pair.pcam1->cam_disconnect();
+	cout<<"cam 2 start"<<endl;
+	camera_pair.pcam2->cam.StartCapture();
+	camera_pair.pcam2->cam_trigger();
+	camera_pair.pcam2->cam_grab_save("/home/ordoid/pheno3v2/t1");
+	camera_pair.pcam2->cam_disconnect();
+	cout<<"cams done"<<endl;
+	
+	//camera_pair.camPair_capture("/home/ordoid/pheno3v2/t1");										// take a picture using cameras
 	
 	MCodeMotor motor(motorIpAddress, motorPort);			// initializing object of class MCodeMotor
 
