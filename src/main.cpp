@@ -24,7 +24,9 @@ const int lidarPort = 10940;							// lidar port
 Socket serverSocket;
 
 int main() 
-{	//string commandReceived;
+{	
+	std::cout<<"START"<<endl;
+	//string commandReceived;
 /*
 	// get connection from Jetson
 	cout << "Listening for connection" << endl;
@@ -52,24 +54,13 @@ int main()
 
 	/// Init sensors and motors
 
-	CameraPair camera_pair;										// intializing object of class camera
+	CameraPair camera_pair;									// intializing object of class camera
 
 	camera_pair.camPair_connect();
 	camera_pair.camPair_init();
+
 	
-	cout<<"cam 1 start"<<endl;
-	camera_pair.pcam1->cam.StartCapture();
-	camera_pair.pcam1->cam_trigger();
-	camera_pair.pcam1->cam_grab_save("/home/ordoid/pheno3v2/t1");
-	camera_pair.pcam1->cam_disconnect();
-	cout<<"cam 2 start"<<endl;
-	camera_pair.pcam2->cam.StartCapture();
-	camera_pair.pcam2->cam_trigger();
-	camera_pair.pcam2->cam_grab_save("/home/ordoid/pheno3v2/t1");
-	camera_pair.pcam2->cam_disconnect();
-	cout<<"cams done"<<endl;
-	
-	//camera_pair.camPair_capture("/home/ordoid/pheno3v2/t1");										// take a picture using cameras
+	//camera_pair.camPair_capture("t1");						// take a picture using cameras
 	
 	MCodeMotor motor(motorIpAddress, motorPort);			// initializing object of class MCodeMotor
 
@@ -93,6 +84,8 @@ int main()
 		return 1;
 	}
 
+	motor.initializeSettings();								// initialize motor settings 
+	
 	Scanner scanner(lidar, motor);							// initialize object of class Scanner
 
 	//camera1.cam_init();										// take a picture using camera
@@ -152,8 +145,9 @@ int main()
 				std::cout<<"Parameters: "<<scan_size<<", " <<scan_lines<<", "<<lidar_scan_size<<", "<<scan_center<<endl;
 		
 				filename.append(filename_pfx);
+				camera_pair.camPair_capture(filename_pfx);										// take a picture using cameras
 				
-				camera_pair.camPair_capture(filename);										// take a picture using cameras
+
 				
 				filename.append(".pcd");
 				std::cout<<"file path"<<filename<<std::endl;
@@ -163,7 +157,7 @@ int main()
 				if(rdata.size() == 0)
 					std::cout<<"Error: no scanner data received"<<std::endl;
 				saveRaw(rdata, filename);
-				cout << "done!" << endl;
+				cout << "Done!" << endl;
 				motor.moveAngleAbsolute(0);
 			break;
 			default:
@@ -172,10 +166,9 @@ int main()
 			break;
 		}
 		
-		camera_pair.camPair_disconnect();
-
+		
 	}	
-
+	camera_pair.camPair_disconnect();
 	return 0;
 
 }

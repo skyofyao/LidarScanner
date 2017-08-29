@@ -85,7 +85,7 @@ void Scanner::stepScan(float scan_size, int scan_lines, float line_size, float s
 		motor.moveAngleAbsolute(angle_start + angle_per_scan * i, 0);
 		vector<Lidar::DataPointRaw> rdata = lidar.scan_once(line_size);
 		motor.blockWhileMoving(500);
-		int msecondsToSleep = 50;
+		int msecondsToSleep = 100;
 #if defined(WIN32) || defined(WIN64)
 		Sleep(msecondsToSleep);
 #elif defined(LINUX)

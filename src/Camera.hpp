@@ -13,7 +13,7 @@ using namespace std;
 
 #define INIT_MAXTRIES 5
 
-static const float SHUTTER_SPEED_VALUE = 40;
+static const float SHUTTER_SPEED_VALUE = 5;
 static const float GAIN_VALUE = 0;
 
 class Camera11
@@ -23,7 +23,7 @@ public:
 	~Camera11(){}
 
 	int cam_connect();
-	int cam_init();
+	int cam_init(float shutter_speed = SHUTTER_SPEED_VALUE);
 	int cam_grab_save(string filename_prefix);
 	int cam_trigger();
 	int cam_disconnect();

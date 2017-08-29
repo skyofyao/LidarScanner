@@ -258,7 +258,7 @@ int Camera11::cam_connect()
 	return 0;
 }
 			
-int Camera11::cam_init()
+int Camera11::cam_init(float shutterspeed)
 {
 	//
 	//Main Aim is to set the width and height
@@ -321,7 +321,7 @@ int Camera11::cam_init()
 	// Set the settings to the camera
 	error = cam.SetFormat7Configuration(
 		&fmt7ImageSettings,
-		fmt7PacketInfo.recommendedBytesPerPacket/2);
+		fmt7PacketInfo.recommendedBytesPerPacket);
 		cout<<"Packet size:"<<fmt7PacketInfo.recommendedBytesPerPacket<<endl;
 	if (error != PGRERROR_OK)
 	{
@@ -377,7 +377,7 @@ int Camera11::cam_init()
 
 	// shutter code 
 	prop.type = SHUTTER;
-	prop.onOff = false;
+	prop.onOff = true;
 	prop.autoManualMode = false;
 	prop.absControl = true; 
 	prop.absValue = SHUTTER_SPEED_VALUE; // changes in this value changes shutter speed. It is in milliseconds
@@ -532,10 +532,9 @@ int Camera11::cam_init()
 	}
 
 	// Set the camera to use buffer
-	cam.WriteRegister(0x12E8, 0x80000F00);// Clear buffer
-	cam.WriteRegister(0x12E8, 0x82000F00);// Enable buffer
-	
-	cout <<"init complete "<<cam_num<<std::endl;
+	//cam.WriteRegister(0x12E8, 0x80000F00);// Clear buffer
+	//cam.WriteRegister(0x12E8, 0x82000F00);// Enable buffer
+
 	return 0;
 }
 
@@ -552,7 +551,7 @@ int Camera11::cam_trigger()
 	bool retVal1 = FireSoftwareTrigger(&cam);
 
 	//cam.StopCapture();
-	//cout<<"trigger done"<<endl;
+	cout<<"trigger done"<<endl;
 	if (!retVal1)
 	{
 		cout << endl;
@@ -565,7 +564,7 @@ int Camera11::cam_trigger()
 }
 int Camera11::cam_grab_save(string filename_prefix)
 {
-	cam.WriteRegister(0x12E8, 0x82000F01);
+	//cam.WriteRegister(0x12E8, 0x82000F01);
 	//t = get_time();
 	Error error = cam.RetrieveBuffer(&image);
 	if (error != PGRERROR_OK)
@@ -580,26 +579,40 @@ int Camera11::cam_grab_save(string filename_prefix)
 	Image convertedimage;
 
 	//Converting the raw image to pgm
-	error = image.Convert(PIXEL_FORMAT_RAW8, &convertedimage);
+	error = image.Convert(PIXEL_FORMAT_RGB, &convertedimage);
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
 		return -1;
 	}
 
-	// Creating a Unique Filename
-	string file_name_cur = filename_prefix;
+	// Creating a filename
+	// Issue: works fine whe directly accept the filename prefix from putty console, but failed when using ssh.net.
+	// But the string contains the same content
+	string file_name_cur = "/home/odroid/pheno3v2/photos/";
+	//file_name_cur.append(filename_prefix);
+	// int filename_num = stoi(filename_prefix);
+	// string file_name_pfx = to_string(filename_num);
+	file_name_cur.append(filename_prefix);
 	file_name_cur.append("_");
 	file_name_cur.append(cam_num);
-	file_name_cur.append(".pgm");
+	file_name_cur.append(".bmp");
 
 	//saving the image
+	cout<<"filename: "<<file_name_cur<<endl;
+	
+	// std::cout<<"Path chars: "<<file_name_cur.length()<<" as int:";
+	// for(int i = 0; i < file_name_cur.length(); i++)
+		// std::cout<<(int)file_name_cur[i]<<" ";
+	// std::cout<<endl;
+	
 	error = convertedimage.Save(file_name_cur.c_str());
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
 		return -1;
 	}
+	return 0;
 }
 
 // Turn trigger mode off.
@@ -714,22 +727,22 @@ int CameraPair::camPair_init()
 	// Camera is ready, start capturing images
 	cout << "Cameras capture start l" <<endl;
 	//Error error = Camera::StartSyncCapture(2, p_cam);
-	// Error error = pcam1->cam.StartCapture();
-	// if (error != PGRERROR_OK)
-	// {
-		// PrintError(error);
-		// return -1;
-	// }
+	Error error = pcam1->cam.StartCapture();
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 	// //pcam1->cam.StopCapture();
-	// cout << "Cameras capture start r" <<endl;
-	// error = pcam2->cam.StartCapture();
-	// if (error != PGRERROR_OK)
-	// {
-		// PrintError(error);
-		// return -1;
-	// }
+	cout << "Cameras capture start r" <<endl;
+	error = pcam2->cam.StartCapture();
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 	// //pcam2->cam.StopCapture();
-	// cout << "Cameras capture started" << endl;
+	cout << "Cameras capture started" << endl;
 // #ifdef SOFTWARE_TRIGGER_CAMERA
 	// if (!CheckSoftwareTriggerPresence(&pcam1->cam) && !CheckSoftwareTriggerPresence(&pcam2->cam))
 	// {
@@ -760,7 +773,7 @@ int CameraPair::camPair_capture(string filename_prefix)
 	
 	if (stat1 <0 || stat2 <0)
 	{
-		std::cout<<"Cam pair capture error: L "<<stat1<<" R "<<stat2<<std::endl;
+		std::cout<<"Cam pair save error: L "<<stat1<<" R "<<stat2<<std::endl;
 		return -1;
 	}
 	return 0;
@@ -772,6 +785,8 @@ int CameraPair::camPair_disconnect()
 	pcam2->cam_disconnect();
 	return 0;
 }
+
+
 
 void PrintError(Error error)
 {
