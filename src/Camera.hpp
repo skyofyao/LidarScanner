@@ -13,7 +13,7 @@ using namespace std;
 
 #define INIT_MAXTRIES 5
 
-static const float SHUTTER_SPEED_VALUE = 5;
+static const float SHUTTER_SPEED_VALUE = 10;
 static const float GAIN_VALUE = 0;
 
 class Camera11

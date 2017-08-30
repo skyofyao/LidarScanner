@@ -84,7 +84,7 @@ int main()
 		return 1;
 	}
 
-	motor.initializeSettings();								// initialize motor settings 
+	motor.initializeSettings(500, 500);								// initialize motor settings 
 	
 	Scanner scanner(lidar, motor);							// initialize object of class Scanner
 
@@ -146,9 +146,7 @@ int main()
 		
 				filename.append(filename_pfx);
 				camera_pair.camPair_capture(filename_pfx);										// take a picture using cameras
-				
-
-				
+	
 				filename.append(".pcd");
 				std::cout<<"file path"<<filename<<std::endl;
 				

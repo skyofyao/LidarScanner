@@ -80,8 +80,8 @@ public:
 
 	/// Sends all of the settings to the motor. If paramters are not specified, the default settings will be sent.
 	void initializeSettings(
-		const unsigned int acceleration = DEFAULT_ACCELERATION /20,
-		const unsigned int deceleration = DEFAULT_DECELERATION/20,
+		const unsigned int acceleration = DEFAULT_ACCELERATION,
+		const unsigned int deceleration = DEFAULT_DECELERATION,
 		const unsigned int initialVelocity = DEFAULT_INITIAL_VELOCITY,
 		const unsigned int maximumVelocity = DEFAULT_MAXIMUM_VELOCITY,
 		const unsigned int runCurrent = DEFAULT_RUN_CURRENT,
