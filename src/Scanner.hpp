@@ -32,10 +32,10 @@ public:
 	};
 
 	Scanner(Lidar& lidar, MCodeMotor& motor);
-	void contScan(float scan_size = SCAN_SIZE, float scan_velocity = SCAN_VELOCITY, float scan_center = SCAN_CENTER); 	// Scanning mode one, continuous
+	void contScan(float scan_size = SCAN_SIZE, int scan_lines = 360, float line_size = 120, float scan_center = SCAN_CENTER); 	// Scanning mode one, continuous
 	//void contScan(float scan_size, int scan_lines, float line_size, float scan_center = SCAN_CENTER);
 	void stepScan(float scan_size, int scan_lines, float line_size, float scan_center = SCAN_CENTER);	// Scanning mode two, stepping motor
-	vector<DataPoint> getLidarData();
+	static vector<DataPoint> getLidarData(vector<Scanner::DataRaw>& dataRaw);
 	vector<Scanner::DataRaw> getLidarRaw();
 private:
 	static const int SCAN_CENTER;
@@ -44,7 +44,7 @@ private:
 
 	Lidar& lidar;
 	MCodeMotor& motor;
-	vector<DataPoint> lidarData;
+	 vector<DataPoint> lidarData;
 	vector<DataRaw> lidarRawData;
 	// status:
 	bool _is_motor_ready = false;

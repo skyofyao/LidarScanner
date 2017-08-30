@@ -47,16 +47,17 @@ private:
 	/// Amount of time between each check for a response from the motor.
 	static const unsigned int MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS;
 
-	/// Distance from home in encoder counts of the default zero position.
-	static const int DEFAULT_POSITION;
 
-	// Number of encoder counts in a single rotation.
-	static const unsigned int ENCODER_COUNTS_PER_ROTATION;
 	
 	// Number of microsteps in a single rotation.
 	//static const unsigned int MICRO_STEPS_PER_ROTATION;
 
 public:
+	/// Distance from home in encoder counts of the default zero position.
+	static const int DEFAULT_POSITION;
+
+	// Number of encoder counts in a single rotation.
+	static const unsigned int ENCODER_COUNTS_PER_ROTATION;
 	/// Constructs a new McodeMotor.
 	/// \param ipAddress IP address of the motor.
 	/// \param port IP port number to connect to the motor on.

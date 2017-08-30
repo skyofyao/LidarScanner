@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 using namespace std;
 
@@ -30,15 +31,17 @@ Scanner::Scanner(Lidar& lidar, MCodeMotor& motor)
 	@param scan_velocity - The motor speed whil moving, in encoder/second
 	@param scan_center - The center of the scanning (motor swiping) view, relative to the defind home. in deg
 */
-void Scanner::contScan(float scan_size, float scan_velocity, float scan_center)
+void Scanner::contScan(float scan_size, int scan_lines, float line_size, float scan_center)
 {
 	motor.moveAngleAbsolute(scan_center - scan_size / 2);
+
+	int scan_velocity = scan_size / scan_lines * MCodeMotor::ENCODER_COUNTS_PER_ROTATION / 360.0 * Lidar::SCANS_PER_SECOND;
 
 	motor.setMaximumVelocity(scan_velocity);
 
 	motor.moveAngleRelative(scan_size, 0);
 
-	vector<Lidar::DataPoint> data = lidar.scan_time(motor.getMoveRelativeTime(SCAN_SIZE));
+	std::vector<Lidar::DataPointRaw> data = lidar.scan_time(motor.getMoveRelativeTime(SCAN_SIZE));
 
 	motor.blockWhileMoving(1000);
 
@@ -46,28 +49,28 @@ void Scanner::contScan(float scan_size, float scan_velocity, float scan_center)
 	// process data
 	for (unsigned int i = 0; i < data.size(); i++)
 	{
-		Lidar::DataPoint point = data.at(i);
+		Lidar::DataPointRaw point = data.at(i);
 		double angle = (motor.getMoveRelativeAngleAtTime(scan_size, point.timestamp - startTime) -
 			(scan_size / 2.0)) * PI / 180;
 
 		// convert from cylindrical to orthagonal coordinates
-		DataPoint newPoint;
-		newPoint.x = point.y * cos(angle);
-		newPoint.y = point.y * sin(angle);
-		newPoint.z = point.x;
+		DataRaw newPoint;
+		newPoint.dis = point.dis;
+		newPoint.angle_motor = angle;
+		newPoint.angle_scan = point.radian / PI * 180.0;
 		newPoint.intensity = point.intensity;
-		lidarData.push_back(newPoint);
+		lidarRawData.push_back(newPoint);
 	}
 
 	// return maximum velocity back to default
-	motor.setMaximumVelocity();
+	//motor.setMaximumVelocity();
 
 }
 
-// Step mode. Not finished yet
 // Stepping scanning mode, stop-scan-move-stop-scan-....
 /*	@param scan_size - The angle of scanning (motor movement), in deg
 	@param scan_lines - How many lines within the entire scanning
+	@param lin_size - The angle for each scan line to save
 	@param scan_center - The center of the scanning (motor swiping) view, relative to the defind home. in deg
 */
 void Scanner::stepScan(float scan_size, int scan_lines, float line_size, float scan_center)
@@ -83,7 +86,7 @@ void Scanner::stepScan(float scan_size, int scan_lines, float line_size, float s
 	for(int i = 0; i < scan_lines; i++)
 	{
 		motor.moveAngleAbsolute(angle_start + angle_per_scan * i, 0);
-		vector<Lidar::DataPointRaw> rdata = lidar.scan_once(line_size);
+
 		motor.blockWhileMoving(500);
 		int msecondsToSleep = 100;
 #if defined(WIN32) || defined(WIN64)
@@ -94,6 +97,7 @@ void Scanner::stepScan(float scan_size, int scan_lines, float line_size, float s
 		nsDelay.tv_nsec = (long)msecondsToSleep * 1000000L;
 		nanosleep(&nsDelay, NULL);
 #endif
+		vector<Lidar::DataPointRaw> rdata = lidar.scan_once(line_size);
 		// Append scanner data to the vector in class
 		vector<DataRaw> tempvec(rdata.size());
 		for(int it_vec = 0; it_vec < rdata.size(); it_vec++)
@@ -108,9 +112,24 @@ void Scanner::stepScan(float scan_size, int scan_lines, float line_size, float s
 	}
 }
 
-vector<Scanner::DataPoint> Scanner::getLidarData()
+
+// Process raw data to calculate xyz data
+vector<Scanner::DataPoint> Scanner::getLidarData(vector<Scanner::DataRaw>& dataRaw)
 {
-	return lidarData;
+	vector<Scanner::DataPoint> vec_xyzi;
+	int cloudsize = dataRaw.size();
+	int valid_n = 0;
+	for (int i = 0; i < cloudsize; i++)
+	{
+		vec_xyzi[valid_n].intensity = dataRaw[i].intensity;
+		vec_xyzi[valid_n].y = dataRaw[i].dis * sin(dataRaw[i].angle_scan * PI / 180.0);
+		double dis_xz = dataRaw[i].dis * cos(dataRaw[i].angle_motor * PI / 180.0);
+		vec_xyzi[valid_n].z = dis_xz * cos(dataRaw[i].angle_motor * PI / 180.0);
+		vec_xyzi[valid_n].x = dis_xz * sin(dataRaw[i].angle_motor * PI / 180.0);
+		valid_n++;
+	}
+	vec_xyzi.resize(valid_n);
+	return vec_xyzi;
 }
 
 vector<Scanner::DataRaw> Scanner::getLidarRaw()

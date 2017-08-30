@@ -158,6 +158,26 @@ int main()
 				cout << "Done!" << endl;
 				motor.moveAngleAbsolute(0);
 			break;
+			case 'C':
+				std::cout << "Cont scan" << endl;
+				str_stm >> scan_size >> scan_lines >> lidar_scan_size >> scan_center;
+				str_stm.ignore();
+				std::cout << "Parameters: " << scan_size << ", " << scan_lines << ", " << lidar_scan_size << ", " << scan_center << endl;
+
+				filename.append(filename_pfx);
+				camera_pair.camPair_capture(filename_pfx);										// take a picture using cameras
+
+				filename.append(".pcd");
+				std::cout << "file path" << filename << std::endl;
+
+				scanner.contScan(scan_size, scan_lines, lidar_scan_size, scan_center);
+				rdata = scanner.getLidarRaw();
+				if (rdata.size() == 0)
+					std::cout << "Error: no scanner data received" << std::endl;
+				saveRaw(rdata, filename);
+				cout << "Done!" << endl;
+				motor.moveAngleAbsolute(0);
+				break;
 			default:
 				std::cout<<"Invalid scan_type: "<<scan_type<<endl;
 				return 0;

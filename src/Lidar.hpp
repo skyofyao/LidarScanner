@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "Urg_driver.h"
 
@@ -28,13 +29,15 @@ public:
 
 	Lidar(const string& ipAddress, const unsigned int port);
 	bool connect();
-	vector<DataPoint> scan_time(const unsigned int milliseconds, float line_size = 0);
+	vector<DataPointRaw> scan_time(const unsigned int milliseconds, float line_size = 0);
 	vector<DataPointRaw> scan_once(float line_size = 0);
 	bool is_connected = false;
 
-private:
 	static const unsigned int RANGE;
 	static const unsigned int SCANS_PER_SECOND;
+
+private:
+
 	
 	static const unsigned int MAX_STEPS = 1080;
 	static const unsigned int MAX_ANGLE = 270; // in deg
@@ -43,7 +46,7 @@ private:
 	const string ipAddress;
 	const unsigned int port;
 
-	void processScan(vector<long>& data, vector<unsigned short>& intensity, long timeStamp, vector<DataPoint>& dataPoints, float line_size = 0);
+	//void processScan(vector<long>& data, vector<unsigned short>& intensity, long timeStamp, vector<DataPoint>& dataPoints, float line_size = 0);
 	void processScanRaw(vector<long>& data, vector<unsigned short>& intensity, long timeStamp, vector<DataPointRaw>& rdataPoints, float line_size = 0);
 
 	qrk::Urg_driver urg;
