@@ -50,10 +50,11 @@ vector<Lidar::DataPointRaw> Lidar::scan_time(const unsigned int milliseconds, fl
 			cout << "Urg_driver::get_distance(): " << urg.what() << endl;
 			//return 1; TODO handle this properly
 		}
-		std::cout << "Urg_get_dis_inten() received points: " << data.size() << std::endl;
+		//std::cout << "Urg_get_dis_inten() received points: " << data.size() << std::endl;
 		processScanRaw(data, intensity, timestamp, dataPoints, line_size);		
 	}
 	urg.stop_measurement();
+	std::cout << "Urg_get_dis_inten() received points: " << dataPoints.size() << std::endl;
 
 	return dataPoints;
 }
@@ -136,7 +137,7 @@ void Lidar::processScanRaw(vector<long>& data, vector<unsigned short>& intensity
 		}
 	}
 	data_current_scan.resize(n_valid);
-	//std::cout<<"In scan, valid:"<<n_valid<<endl;
+	//std::cout<<"In scan, valid:"<<n_valid<<"/"<<data.size()<<endl;
 	// Append to the end of the output vector
 	dataPoints.insert(dataPoints.end(), data_current_scan.begin(), data_current_scan.end());
 }

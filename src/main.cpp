@@ -119,25 +119,25 @@ int main()
 		string filename = "/home/odroid/pheno3v2/photos/";
 		
 		vector<Scanner::DataRaw> rdata;
-		vector<Scanner::DataPoint> data;
+		//vector<Scanner::DataPoint> data;
 		
 		switch(scan_type)
 		{
-			case 'O':
-				std::cout<<"Origional scan"<<endl;
-				scanner.contScan();											// start scanning using the Lidar at specified angle and speed
+			//case 'O':
+			//	std::cout<<"Origional scan"<<endl;
+			//	scanner.contScan();											// start scanning using the Lidar at specified angle and speed
 
-				motor.moveAngleAbsolute(0);								// after scanning bring back the motor to home location
+			//	motor.moveAngleAbsolute(0);								// after scanning bring back the motor to home location
 
-				data = scanner.getLidarData(); 	// get the data by scanning from the Lidar
-				
-				if(data.size() == 0)
-					std::cout<<"Error: no scanner data received"<<std::endl;
+			//	//data = scanner.getLidarData(); 	// get the data by scanning from the Lidar
+			//	
+			//	if(data.size() == 0)
+			//		std::cout<<"Error: no scanner data received"<<std::endl;
 
-				savePCD(data, filename);
+			//	savePCD(data, filename);
 
-				cout << "done!" << endl;	
-			break;
+			//	cout << "done!" << endl;	
+			//break;
 			case 'S':
 				std::cout<<"Step scan"<<endl;
 				str_stm >> scan_size>> scan_lines>> lidar_scan_size>> scan_center;

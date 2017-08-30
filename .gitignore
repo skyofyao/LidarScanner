@@ -3,3 +3,5 @@ build/
 pheno3
 
 ./*.pgm
+/.vs
+/photos

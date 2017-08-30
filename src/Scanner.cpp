@@ -41,17 +41,18 @@ void Scanner::contScan(float scan_size, int scan_lines, float line_size, float s
 
 	motor.moveAngleRelative(scan_size, 0);
 
-	std::vector<Lidar::DataPointRaw> data = lidar.scan_time(motor.getMoveRelativeTime(SCAN_SIZE));
+	std::vector<Lidar::DataPointRaw> data = lidar.scan_time(motor.getMoveRelativeTime(SCAN_SIZE), line_size);
 
 	motor.blockWhileMoving(1000);
 
+	std::cout << "Saving data" << endl;
 	long startTime = data.at(0).timestamp;
 	// process data
 	for (unsigned int i = 0; i < data.size(); i++)
 	{
 		Lidar::DataPointRaw point = data.at(i);
 		double angle = (motor.getMoveRelativeAngleAtTime(scan_size, point.timestamp - startTime) -
-			(scan_size / 2.0)) * PI / 180;
+			(scan_size / 2.0));
 
 		// convert from cylindrical to orthagonal coordinates
 		DataRaw newPoint;
