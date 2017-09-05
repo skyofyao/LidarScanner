@@ -29,6 +29,7 @@ public:
 
 	Lidar(const string& ipAddress, const unsigned int port);
 	bool connect();
+	void scan_time_start();
 	vector<DataPointRaw> scan_time(const unsigned int milliseconds, float line_size = 0);
 	vector<DataPointRaw> scan_once(float line_size = 0);
 	bool is_connected = false;

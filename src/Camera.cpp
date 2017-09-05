@@ -589,24 +589,20 @@ int Camera11::cam_grab_save(string filename_prefix)
 	// Creating a filename
 	// Issue: works fine whe directly accept the filename prefix from putty console, but failed when using ssh.net.
 	// But the string contains the same content
-	string file_name_cur = "/home/odroid/pheno3v2/photos/";
-	//file_name_cur.append(filename_prefix);
-	// int filename_num = stoi(filename_prefix);
-	// string file_name_pfx = to_string(filename_num);
-	file_name_cur.append(filename_prefix);
-	file_name_cur.append("_");
-	file_name_cur.append(cam_num);
-	file_name_cur.append(".bmp");
+
+	filename_prefix.append("_");
+	filename_prefix.append(cam_num);
+	filename_prefix.append(".bmp");
 
 	//saving the image
-	cout<<"filename: "<<file_name_cur<<endl;
+	cout<<"filename: "<< filename_prefix <<endl;
 	
 	// std::cout<<"Path chars: "<<file_name_cur.length()<<" as int:";
 	// for(int i = 0; i < file_name_cur.length(); i++)
 		// std::cout<<(int)file_name_cur[i]<<" ";
 	// std::cout<<endl;
 	
-	error = convertedimage.Save(file_name_cur.c_str());
+	error = convertedimage.Save(filename_prefix.c_str());
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);

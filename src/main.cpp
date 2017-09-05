@@ -23,7 +23,7 @@ const int lidarPort = 10940;							// lidar port
 
 Socket serverSocket;
 
-int main() 
+int main(int argc, char** argv) 
 {	
 	std::cout<<"START"<<endl;
 	//string commandReceived;
@@ -95,7 +95,7 @@ int main()
 	{
 		std::cout<<"Input parameters"<<endl;
 		// Parameter format: 
-		// "[char:scanType] [str:filename] [float:scan_size] [int:scan_lines] [float:lidarScanSize] [float:scan_center]"
+		// "[char:scanType] [str:filename] [float:scan_size] [int:scan_lines] [float:lidarScanSize] [float:scan_center] [int: scan_times]"
 		string input_str;
 		getline(cin,input_str);
 		stringstream str_stm = stringstream(input_str);
@@ -106,6 +106,7 @@ int main()
 		float scan_center = 0;	// The middle angle of motor movement, in deg
 		float lidar_scan_size = 0; // The angle of lidar valid scan pixels, in deg
 		int	 scan_lines = 0; // How many lines to be scanned in the motor movement
+		int scan_times = 0;	// How many times to scan 
 		// Parse parameters
 		str_stm >> scan_type;
 		if(scan_type <31 || scan_type > 127 )
@@ -118,8 +119,9 @@ int main()
 		
 		string filename = "/home/odroid/pheno3v2/photos/";
 		
-		vector<Scanner::DataRaw> rdata;
-		//vector<Scanner::DataPoint> data;
+		vector<Scanner::DataRaw>* rdata;
+		vector<Scanner::DataPoint> data;
+
 		
 		switch(scan_type)
 		{
@@ -140,9 +142,9 @@ int main()
 			//break;
 			case 'S':
 				std::cout<<"Step scan"<<endl;
-				str_stm >> scan_size>> scan_lines>> lidar_scan_size>> scan_center;
+				str_stm >> scan_size>> scan_lines>> lidar_scan_size>> scan_center>>scan_times;
 				str_stm.ignore();
-				std::cout<<"Parameters: "<<scan_size<<", " <<scan_lines<<", "<<lidar_scan_size<<", "<<scan_center<<endl;
+				std::cout<<"Parameters: "<<scan_size<<", " <<scan_lines<<", "<<lidar_scan_size<<", "<<scan_center<<", "<<scan_times<<endl;
 		
 				filename.append(filename_pfx);
 				camera_pair.camPair_capture(filename_pfx);										// take a picture using cameras
@@ -150,19 +152,19 @@ int main()
 				filename.append(".pcd");
 				std::cout<<"file path"<<filename<<std::endl;
 				
-				scanner.stepScan(scan_size, scan_lines, lidar_scan_size, scan_center);
-				rdata = scanner.getLidarRaw();
-				if(rdata.size() == 0)
+				scanner.stepScan(scan_size, scan_lines, lidar_scan_size, scan_center, scan_times);
+				rdata = scanner.getLidarRawPtr();
+				if(rdata->size() == 0)
 					std::cout<<"Error: no scanner data received"<<std::endl;
-				saveRaw(rdata, filename);
+				saveRaw(*rdata, filename);
 				cout << "Done!" << endl;
 				motor.moveAngleAbsolute(0);
 			break;
 			case 'C':
 				std::cout << "Cont scan" << endl;
-				str_stm >> scan_size >> scan_lines >> lidar_scan_size >> scan_center;
+				str_stm >> scan_size >> scan_lines >> lidar_scan_size >> scan_center >> scan_times;
 				str_stm.ignore();
-				std::cout << "Parameters: " << scan_size << ", " << scan_lines << ", " << lidar_scan_size << ", " << scan_center << endl;
+				std::cout << "Parameters: " << scan_size << ", " << scan_lines << ", " << lidar_scan_size << ", " << scan_center << ", " << scan_times << endl;
 
 				filename.append(filename_pfx);
 				camera_pair.camPair_capture(filename_pfx);										// take a picture using cameras
@@ -170,13 +172,38 @@ int main()
 				filename.append(".pcd");
 				std::cout << "file path" << filename << std::endl;
 
-				scanner.contScan(scan_size, scan_lines, lidar_scan_size, scan_center);
-				rdata = scanner.getLidarRaw();
-				if (rdata.size() == 0)
+				scanner.contScan(scan_size, scan_lines, lidar_scan_size, scan_center, scan_times);
+				rdata = scanner.getLidarRawPtr();
+				data = scanner.getLidarData(*rdata);
+				if (data.size() == 0)
 					std::cout << "Error: no scanner data received" << std::endl;
-				saveRaw(rdata, filename);
+				saveColoredPCD(data, filename);
 				cout << "Done!" << endl;
 				motor.moveAngleAbsolute(0);
+				break;
+			case 'L':	// For camera calibration
+				std::cout << "Calibration mode" << endl;
+				str_stm.ignore();
+				filename.append(filename_pfx);
+				std::cout << "File prefix:" << filename << endl;
+
+				while (1)
+				{
+					std::cout << "Ready to take images, input file number to start" << endl;
+					getline(cin, input_str);
+					str_stm = stringstream(input_str);
+					string file_num;
+					str_stm >> file_num;
+					string filename_img = filename;
+					filename_img.append(file_num);
+					
+					camera_pair.camPair_capture(filename_img);
+
+
+				}
+
+
+
 				break;
 			default:
 				std::cout<<"Invalid scan_type: "<<scan_type<<endl;

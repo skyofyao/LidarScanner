@@ -29,6 +29,11 @@ bool Lidar::connect()
 	return true;
 }
 
+void Lidar::scan_time_start()
+{
+
+}
+
 // Perform continues scan for certain time
 /* Param: line_size: for each scan, define the size in which data is valid, in deg
 */
@@ -51,7 +56,7 @@ vector<Lidar::DataPointRaw> Lidar::scan_time(const unsigned int milliseconds, fl
 			//return 1; TODO handle this properly
 		}
 		//std::cout << "Urg_get_dis_inten() received points: " << data.size() << std::endl;
-		processScanRaw(data, intensity, timestamp, dataPoints, line_size);		
+		processScanRaw(data, intensity, timestamp, dataPoints, line_size);
 	}
 	urg.stop_measurement();
 	std::cout << "Urg_get_dis_inten() received points: " << dataPoints.size() << std::endl;
@@ -122,7 +127,7 @@ void Lidar::processScanRaw(vector<long>& data, vector<unsigned short>& intensity
 	int idx_max = idx_mid + line_size / LIDAR_ANGULAR_RES / 2;
 	
 	// TODO get this to calculate things right
-	double timePerIndex = 1000.0 * abs(urg.index2deg(1) - urg.index2deg(0)) / SCANS_PER_SECOND / 360.0;
+	double timePerIndex = 1000.0 * abs(urg.index2deg(1) - urg.index2deg(0)) / SCANS_PER_SECOND / 360.0; // ms
 	int n_valid = 0;
 	vector<DataPointRaw> data_current_scan(idx_max - idx_min);
 	for (size_t i = idx_min; i < idx_max; ++i)

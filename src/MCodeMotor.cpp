@@ -51,6 +51,7 @@ string& MCodeMotor::sendCommand(const string& command)
 		(chrono::duration_cast<std::chrono::milliseconds>(											// time duration between current and received time is less than timout time 
 			chrono::steady_clock::now() - recieveStartTime).count() <=
 			MOTOR_RESPONSE_TIMEOUT_MILLISECONDS))
+			
 	{
 		this_thread::sleep_for(chrono::milliseconds(MOTOR_RESPONSE_SLEEP_TIME_MILLISECONDS));		// wait for next response
 		response = response + socket.receiveString();												// add new response to old response	
