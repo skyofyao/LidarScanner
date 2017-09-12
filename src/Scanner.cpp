@@ -137,7 +137,7 @@ vector<Scanner::DataPoint> Scanner::getLidarData(vector<Scanner::DataRaw>& dataR
 	{
 		vec_xyzi[valid_n].intensity = dataRaw[i].intensity;
 		vec_xyzi[valid_n].y = dataRaw[i].dis * sin(dataRaw[i].angle_scan * PI / 180.0);
-		double dis_xz = dataRaw[i].dis * cos(dataRaw[i].angle_motor * PI / 180.0);
+		double dis_xz = dataRaw[i].dis * cos(dataRaw[i].angle_scan * PI / 180.0);
 		vec_xyzi[valid_n].z = dis_xz * cos(dataRaw[i].angle_motor * PI / 180.0);
 		vec_xyzi[valid_n].x = dis_xz * sin(dataRaw[i].angle_motor * PI / 180.0);
 		vec_xyzi[valid_n].rgb = dataRaw[i].direction ? 0xFF0000 : 0x00FF00;

@@ -23,6 +23,10 @@ const int lidarPort = 10940;							// lidar port
 
 Socket serverSocket;
 
+/* Paramters: -nc: no camera used
+		-nm: no motor used
+		-nl: no lidar used
+*/
 int main(int argc, char** argv) 
 {	
 	std::cout<<"START"<<endl;
@@ -51,41 +55,66 @@ int main(int argc, char** argv)
 	commandReceived = serverSocket.receiveString ();
 	cout << commandReceived <<endl;
 */
+	/// Program parameters parsing
+	bool nc = false, nm = false, nl = false;
+	float shutterspeed = 8;
+	if (argc > 1)
+	{
+		for (int i = 1; i < argc; i++)
+		{
+			std::string argv_str(argv[i]);
+			int var;
+			if (argv_str == "-nc")
+				nc = true;
+			else if (argv_str == "-nl")
+				nl = true;
+			else if (argv_str == "-nm")
+				nm = true;
 
+		}
+	}
 	/// Init sensors and motors
 
-	CameraPair camera_pair;									// intializing object of class camera
 
-	camera_pair.camPair_connect();
-	camera_pair.camPair_init();
+	CameraPair camera_pair;									// intializing object of class camera
+	if (!nc)
+	{
+		camera_pair.camPair_connect();
+		camera_pair.camPair_init(shutterspeed);
+	}
 
 	
 	//camera_pair.camPair_capture("t1");						// take a picture using cameras
 	
+	Lidar lidar(lidarIpAddress, lidarPort);					// initializing object of class Lidar
+	if (!nl)
+	{
+		if (!lidar.connect())									// checking for lidar connection
+		{
+			std::cout << "Lidar not connected" << std::endl;
+			return 1;
+		}
+	}
+
 	MCodeMotor motor(motorIpAddress, motorPort);			// initializing object of class MCodeMotor
 
-	if (!motor.connect())									// checking for motor connection
+	if (!nm)
 	{
-		std::cout<<"Motor not connected"<<std::endl;
-		return 1;
+		if (!motor.connect())									// checking for motor connection
+		{
+			std::cout << "Motor not connected" << std::endl;
+			return 1;
+		}
+
+		motor.initializeSettings();								// initialize motor settings 
+
+		if (!motor.homeToIndex())								// check if motor is positioned at home location. Home is defined as the position parallel to the motor alignment
+		{
+			return 1;
+		}
+
+		motor.initializeSettings(500, 500);								// initialize motor settings 
 	}
-
-	Lidar lidar(lidarIpAddress, lidarPort);					// initializing object of class Lidar
-	if (!lidar.connect())									// checking for lidar connection
-	{
-		std::cout<<"Lidar not connected"<<std::endl;
-		return 1;
-	}
-
-	motor.initializeSettings();								// initialize motor settings 
-
-	if (!motor.homeToIndex())								// check if motor is positioned at home location. Home is defined as the position parallel to the motor alignment
-	{
-		return 1;
-	}
-
-	motor.initializeSettings(500, 500);								// initialize motor settings 
-	
 	Scanner scanner(lidar, motor);							// initialize object of class Scanner
 
 	//camera1.cam_init();										// take a picture using camera
@@ -115,7 +144,7 @@ int main(int argc, char** argv)
 			str_stm = stringstream(input_str);
 			str_stm >> scan_type;
 		}
-		str_stm >> filename_pfx;
+		
 		
 		string filename = "/home/odroid/pheno3v2/photos/";
 		
@@ -141,6 +170,7 @@ int main(int argc, char** argv)
 			//	cout << "done!" << endl;	
 			//break;
 			case 'S':
+				str_stm >> filename_pfx;
 				std::cout<<"Step scan"<<endl;
 				str_stm >> scan_size>> scan_lines>> lidar_scan_size>> scan_center>>scan_times;
 				str_stm.ignore();
@@ -161,13 +191,14 @@ int main(int argc, char** argv)
 				motor.moveAngleAbsolute(0);
 			break;
 			case 'C':
+				str_stm >> filename_pfx;
 				std::cout << "Cont scan" << endl;
 				str_stm >> scan_size >> scan_lines >> lidar_scan_size >> scan_center >> scan_times;
 				str_stm.ignore();
 				std::cout << "Parameters: " << scan_size << ", " << scan_lines << ", " << lidar_scan_size << ", " << scan_center << ", " << scan_times << endl;
 
 				filename.append(filename_pfx);
-				camera_pair.camPair_capture(filename_pfx);										// take a picture using cameras
+				camera_pair.camPair_capture(filename);										// take a picture using cameras
 
 				filename.append(".pcd");
 				std::cout << "file path" << filename << std::endl;
@@ -196,14 +227,16 @@ int main(int argc, char** argv)
 					str_stm >> file_num;
 					string filename_img = filename;
 					filename_img.append(file_num);
-					
+
 					camera_pair.camPair_capture(filename_img);
-
-
 				}
-
-
-
+				break;
+			case 'P':
+				float shutter;
+				str_stm >> shutter;
+				std::cout << "Set shutter speed: " << shutter << " ms" << endl;
+				if (shutter > 0 && shutter < 10000)
+					camera_pair.camPair_setShutter(shutter);
 				break;
 			default:
 				std::cout<<"Invalid scan_type: "<<scan_type<<endl;

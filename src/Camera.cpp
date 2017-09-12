@@ -322,7 +322,7 @@ int Camera11::cam_init(float shutterspeed)
 	error = cam.SetFormat7Configuration(
 		&fmt7ImageSettings,
 		fmt7PacketInfo.recommendedBytesPerPacket);
-		cout<<"Packet size:"<<fmt7PacketInfo.recommendedBytesPerPacket<<endl;
+		//cout<<"Packet size:"<<fmt7PacketInfo.recommendedBytesPerPacket<<endl;
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
@@ -335,6 +335,7 @@ int Camera11::cam_init(float shutterspeed)
 	propInfo.type = FRAME_RATE;
 	//Getting the Frame rate Property
 	error = cam.GetPropertyInfo(&propInfo);
+	//cam.SetVideoModeAndFrameRate(VideoMode::Video_Mode640x480Y8,FrameRate::FrameRate3_75;
 
 	if (error != PGRERROR_OK)
 	{
@@ -366,7 +367,8 @@ int Camera11::cam_init(float shutterspeed)
 	//Setting AutoGain OFf
 	prop.type = GAIN;
 	prop.autoManualMode = false;
-	prop.onOff = false;
+	prop.absControl = true;
+	//prop.onOff = false;
 	prop.absValue = GAIN_VALUE;
 	error = cam.SetProperty(&prop);
 	if (error != PGRERROR_OK)
@@ -375,18 +377,61 @@ int Camera11::cam_init(float shutterspeed)
 		return -1;
 	}
 
-	// shutter code 
-	prop.type = SHUTTER;
-	prop.onOff = true;
+	//Setting FRAME_RATE Off
+	prop.type = FRAME_RATE;
+	error = cam.GetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+	
 	prop.autoManualMode = false;
-	prop.absControl = true; 
-	prop.absValue = SHUTTER_SPEED_VALUE; // changes in this value changes shutter speed. It is in milliseconds
+	prop.onOff = false;
 	error = cam.SetProperty(&prop);
 	if (error != PGRERROR_OK)
 	{
 		PrintError(error);
 		return -1;
 	}
+
+	//// shutter code 
+	//prop.type = SHUTTER;
+	//prop.onOff = true;
+	//prop.autoManualMode = false;
+	//prop.absControl = true; 
+	//prop.absValue = shutterspeed; // changes in this value changes shutter speed. It is in milliseconds
+	//error = cam.SetProperty(&prop);
+	//if (error != PGRERROR_OK)
+	//{
+	//	PrintError(error);
+	//	return -1;
+	//}
+	//std::cout << "Shutter:" << shutterspeed << endl;
+
+	ExtendedShutterType shutterType = GENERAL_EXTENDED_SHUTTER;
+
+	// Set the shutter property of the camera
+	prop.type = SHUTTER;
+	error = cam.GetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	prop.autoManualMode = false;
+	prop.absControl = true;
+	prop.absValue = shutterspeed;
+
+	error = cam.SetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	cout << "Shutter time set to " << fixed << setprecision(2) << shutterspeed << "ms" << endl;
 
 	/*
 
@@ -399,49 +444,6 @@ int Camera11::cam_init(float shutterspeed)
 
 	else if ((propInfo.present == true) && (ShutterInput != 1))
 	{	cout<<"entereing in shutter"<<endl;
-
-		//Setting FRAME_RATE Off
-		prop.type = FRAME_RATE;
-		error = cam.GetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-		cin.ignore();
-		prop.autoManualMode = false;
-		prop.onOff = false;
-
-		error = cam.SetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		ExtendedShutterType shutterType = GENERAL_EXTENDED_SHUTTER;
-
-		// Set the shutter property of the camera
-		prop.type = SHUTTER;
-		error = cam.GetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		prop.autoManualMode = false;
-		prop.absControl = true;
-		prop.absValue = ShutterInput;
-
-		error = cam.SetProperty(&prop);
-		if (error != PGRERROR_OK)
-		{
-			PrintError(error);
-			return -1;
-		}
-
-		cout << "Shutter time set to " << fixed << setprecision(2) << ShutterInput << "ms" << endl;
 
 	}
 */
@@ -535,6 +537,31 @@ int Camera11::cam_init(float shutterspeed)
 	//cam.WriteRegister(0x12E8, 0x80000F00);// Clear buffer
 	//cam.WriteRegister(0x12E8, 0x82000F00);// Enable buffer
 
+	return 0;
+}
+
+int Camera11::cam_setShutter(float shutter)
+{
+	// Set the shutter property of the camera
+	Property prop;
+	prop.type = SHUTTER;
+	Error error = cam.GetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+
+	prop.autoManualMode = false;
+	prop.absControl = true;
+	prop.absValue = shutter;
+
+	error = cam.SetProperty(&prop);
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
 	return 0;
 }
 
@@ -708,10 +735,10 @@ int CameraPair::camPair_connect()
 	return -1;
 }
 
-int CameraPair::camPair_init()
+int CameraPair::camPair_init(float shutterspeed)
 {
-	int stat1 = pcam1->cam_init();
-	int stat2 = pcam2->cam_init();
+	int stat1 = pcam1->cam_init(shutterspeed);
+	int stat2 = pcam2->cam_init(shutterspeed);
 	if (stat1 <0 || stat2 <0)
 	{
 		std::cout<<"Cam pair init error: L "<<stat1<<" R "<<stat2<<std::endl;
@@ -750,6 +777,21 @@ int CameraPair::camPair_init()
 // #endif
 	
 	return 0;
+}
+
+int CameraPair::camPair_setShutter(float shutterSpeed)
+{
+	pcam1->cam.StopCapture();
+	pcam2->cam.StopCapture();
+	int stat1 = pcam1->cam_setShutter(shutterspeed);
+	//int stat2 = pcam2->cam_setShutter(shutterspeed);
+	if (stat1 <0 || stat2 <0)
+	{
+		std::cout << "Cam pair set shutter error: L " << stat1 << " R " << stat2 << std::endl;
+		return -1;
+	}
+	pcam1->cam.StopCapture();
+	pcam2->cam.StopCapture();
 }
 
 int CameraPair::camPair_capture(string filename_prefix)

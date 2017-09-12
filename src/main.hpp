@@ -38,10 +38,10 @@ void saveColoredPCD(std::vector<Scanner::DataPoint>& data, std::string filename)
 	stlfile.open(filename);								// opening the file with filename
 														// header
 	stlfile << "VERSION .7" << endl;
-	stlfile << "FIELDS x y z rgb" << endl;// /* intensity"
-	stlfile << "SIZE 4 4 4 4" << endl;// /* 4"
-	stlfile << "TYPE F F F U" << endl;// /* I"
-	stlfile << "COUNT 1 1 1 1" << endl;// /* 1"
+	stlfile << "FIELDS x y z i rgb" << endl;// /* intensity"
+	stlfile << "SIZE 4 4 4 4 4" << endl;// /* 4"
+	stlfile << "TYPE F F F U U" << endl;// /* I"
+	stlfile << "COUNT 1 1 1 1 1" << endl;// /* 1"
 	stlfile << "WIDTH " << data.size() << endl;
 	stlfile << "HEIGHT 1" << endl;
 	stlfile << "VIEWPOINT 0 0 0 1 0 0 0" << endl;
@@ -51,7 +51,7 @@ void saveColoredPCD(std::vector<Scanner::DataPoint>& data, std::string filename)
 	for (unsigned int i = 0; i < data.size(); i++)
 	{
 		Scanner::DataPoint point = data.at(i);				// picking data at each row
-		stlfile << point.x << " " << point.y << " " << point.z <<" "<< point.rgb << endl;		// printing x, y, z, intensity from each data row 
+		stlfile << point.x << " " << point.y << " " << point.z << " " << point.intensity <<" "<< point.rgb << endl;		// printing x, y, z, intensity from each data row 
 	}
 	stlfile.close();
 }
