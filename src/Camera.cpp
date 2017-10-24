@@ -783,15 +783,30 @@ int CameraPair::camPair_setShutter(float shutterSpeed)
 {
 	pcam1->cam.StopCapture();
 	pcam2->cam.StopCapture();
-	int stat1 = pcam1->cam_setShutter(shutterspeed);
-	//int stat2 = pcam2->cam_setShutter(shutterspeed);
+	int stat1 = pcam1->cam_setShutter(shutterSpeed);
+	int stat2 = pcam2->cam_setShutter(shutterSpeed);
 	if (stat1 <0 || stat2 <0)
 	{
 		std::cout << "Cam pair set shutter error: L " << stat1 << " R " << stat2 << std::endl;
 		return -1;
 	}
-	pcam1->cam.StopCapture();
-	pcam2->cam.StopCapture();
+	//Error error = Camera::StartSyncCapture(2, p_cam);
+	Error error = pcam1->cam.StartCapture();
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+	// //pcam1->cam.StopCapture();
+	//cout << "Cameras capture start r" << endl;
+	error = pcam2->cam.StartCapture();
+	if (error != PGRERROR_OK)
+	{
+		PrintError(error);
+		return -1;
+	}
+	// //pcam2->cam.StopCapture();
+	cout << "Cameras capture started" << endl;
 }
 
 int CameraPair::camPair_capture(string filename_prefix)
