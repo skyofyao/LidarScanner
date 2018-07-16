@@ -23,5 +23,22 @@ The program can be compiled by running `make`.
 After the program is compiled, `./bin/pheno3v2` will run the program.
 
 ## Note:
-1. If having trouble running "StartCapture()" for multiple cameras, run "sudo modprobe usbcore usbfs_memory_mb=1000", then reboot.
+1. If having trouble running "StartCapture()" for multiple cameras:
+https://www.ptgrey.com/tan/10685
+For ubuntu older than 14.04:
+run "sudo modprobe usbcore usbfs_memory_mb=1000", then reboot.
 // editing /media/boot/boot.ini and adding usbcore.usbfs_memory_mb=1000 to bootargs toward the end.
+
+For newer than or equal 14.04:
+To set the maximum usbfs memory limit permanently:
+1. Open the /etc/default/grub file in any text editor. Find and replace:
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+with this:
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash usbcore.usbfs_memory_mb=1000"
+2. Update grub with these settings:
+$ sudo update-grub
+3. Reboot and test a USB 3.1 camera.
+If this method fails to set the memory limit, run the following command:
+$ sudo sh -c 'echo 1000 > /sys/module/usbcore/parameters/usbfs_memory_mb'
+To confirm that you have successfully updated the memory limit, run the following command:
+cat /sys/module/usbcore/parameters/usbfs_memory_mb
